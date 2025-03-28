@@ -6,3 +6,4 @@ __Datasets:__
 [California Wildfire Damage (2014-(feb)2025)](https://www.kaggle.com/datasets/vivekattri/california-wildfire-damage-2014-feb2025?resource=download)
 
 [The California Wildfire Data](https://www.kaggle.com/datasets/vijayveersingh/the-california-wildfire-data/data)
++ Original (updated) source: [CAL FIRE Damage Inspection (DINS) Data](https://data.cnra.ca.gov/dataset/cal-fire-damage-inspection-dins-data)
