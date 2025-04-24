@@ -41,14 +41,14 @@ d3.json('structure_data.geojson')
 
             let filtered_data = {
                 ...data,
-                features: data.features//.filter(f => f.properties.INCIDENTSTARTYEAR === 2025)
+                features: data.features
             };
 
             if (incidentSelect.value !== 'All Incidents') {
                 filtered_data.features = filtered_data.features.filter(
                     f => f.properties.INCIDENTNAME === incidentSelect.value
                 );
-            }
+            } else { filtered_data.features = filtered_data.features.filter(f => f.properties.INCIDENTSTARTYEAR === 2025) }
 
             const selectedField = colorFieldSelect.value;
             const isQuantitative = quantitativeFields.includes(selectedField);
@@ -102,7 +102,7 @@ d3.json('structure_data.geojson')
                 div.innerHTML += `
                     <div>
                         <span style="background:black"></span>
-                        null
+                        No data
                     </div>`;
 
                 return div;
@@ -183,25 +183,25 @@ d3.json('structure_data.geojson')
             const margin = { top: 20, right: 20, bottom: 40, left: 40 };
             const width = svg.attr("width") - margin.left - margin.right;
             const height = svg.attr("height") - margin.top - margin.bottom;
-        
+
             // Clear existing plot
             svg.selectAll("*").remove();
-        
+
             // Set up the plot area
             const g = svg.append("g")
                 .attr("transform", `translate(${margin.left},${margin.top})`);
-        
+
             // X and Y scales
             const x = d3.scaleLinear()
                 .domain(d3.extent(filtered_data.features, d => +d.properties.YEARBUILT))
                 .range([0, width]);
-        
+
             const y = d3.scaleLinear()
                 .domain(d3.extent(filtered_data.features, d => +d.properties.ASSESSEDIMPROVEDVALUE))
                 .range([height, 0]);
-        
+
             const selectedField = colorFieldSelect.value;
-        
+
             // Add the scatter plot points
             const points = g.selectAll(".dot")
                 .data(filtered_data.features)
@@ -218,20 +218,20 @@ d3.json('structure_data.geojson')
                     d3.select(this).select(".label-box").style("visibility", "hidden");
                     d3.select(this).select(".label-text").style("visibility", "hidden");
                 });
-        
+
             // Add the circle
             points.append("circle")
                 .attr("r", 5)
                 .style("fill", "#4a90e2")
                 .style("opacity", 0.7);
-        
+
             // Add the background box for the label (rect element)
             points.append("rect")
                 .attr("class", "label-box")
-                .attr("x", 10) 
-                .attr("y", -20) 
-                .attr("rx", 5)  
-                .attr("ry", 5)  
+                .attr("x", 10)
+                .attr("y", -20)
+                .attr("rx", 5)
+                .attr("ry", 5)
                 .attr("width", 180)
                 .attr("height", 30)
                 .style("fill", "white")
@@ -239,38 +239,38 @@ d3.json('structure_data.geojson')
                 .style("stroke-width", 1)
                 .style("visibility", "hidden")
                 .style("box-shadow", "2px 2px 5px rgba(0, 0, 0, 0.1)");
-        
+
             // Add the label text inside the box
             points.append("text")
                 .attr("class", "label-text")
-                .attr("x", 15) 
-                .attr("y", -5)   
+                .attr("x", 15)
+                .attr("y", -5)
                 .style("font-size", "12px")
                 .style("font-family", "Arial, sans-serif")
-                .style("fill", "#333") 
+                .style("fill", "#333")
                 .style("visibility", "hidden")
                 .text(function (d) {
-                    const address = d.properties.ADDRESS || 'No Address Provided'; 
+                    const address = d.properties.ADDRESS || 'No Address Provided';
                     const selectedValue = d.properties[selectedField] || 'No Value';
                     return `${address} (${selectedField}: ${selectedValue})`;
                 });
-        
+
             // Add X axis
             g.append("g")
                 .attr("transform", `translate(0,${height})`)
                 .call(d3.axisBottom(x));
-        
+
             // Add Y axis
             g.append("g")
                 .call(d3.axisLeft(y));
-        
+
             // Add axis labels
             g.append("text")
                 .attr("x", width / 2)
                 .attr("y", height + 35)
                 .style("text-anchor", "middle")
                 .text("YEAR BUILT");
-        
+
             g.append("text")
                 .attr("transform", "rotate(-90)")
                 .attr("y", -40)
@@ -278,9 +278,9 @@ d3.json('structure_data.geojson')
                 .style("text-anchor", "middle")
                 .text("ASSESSED IMPROVED VALUE");
         }
-        
-        
-        
+
+
+
 
         // Event listeners
         incidentSelect.addEventListener('change', updateMap);
@@ -295,7 +295,7 @@ d3.json('structure_data.geojson')
                     const lng = parseFloat(f.geometry.coordinates[0]);
                     return bounds.contains([lat, lng]);
                 });
-        
+
                 updateScatterPlot({ type: "FeatureCollection", features: visibleFeatures });
             }
         });
