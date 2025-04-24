@@ -41,7 +41,7 @@ d3.json('structure_data.geojson')
 
             let filtered_data = {
                 ...data,
-                features: data.features
+                features: data.features//.filter(f => f.properties.INCIDENTSTARTYEAR === 2025)
             };
 
             if (incidentSelect.value !== 'All Incidents') {
