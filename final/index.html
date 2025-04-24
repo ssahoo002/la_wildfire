@@ -7,16 +7,18 @@
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <!-- map -->
-    <div class="container">
-        <div id="map"></div>
+    <div class="main-container">
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+        <div class="plot-container">
+            <svg id="scatterPlot" width="500" height="600"></svg>
+        </div>
     </div>
-    <!-- points vs. heatmap -->
     <div class="button-group">
-        <button id="pointsButton">Points</button>
-        <button id="heatmapButton" class="active">Heatmap</button>
+        <button id="pointsButton" class="active">Points</button>
+        <button id="heatmapButton">Heatmap</button>
     </div>
-    <!--  -->
     <div class="dropdown-container">
         <div>
             <label for="incidentSelect">Select Incident:</label>
@@ -25,12 +27,9 @@
             </select>
         </div>
     </div>
-    <div class="radio-container">
-        <legend>Color Scheme for Points:</legend>
-        <div>
-          <input type="radio" id="damage" name="drone" value="damage" />
-          <label for="damage">Damage Type</label>
-        </div>    
+    <div class="dropdown-container" style="top: 100px;">
+        <label for="colorFieldSelect">Color Points By:</label>
+        <select id="colorFieldSelect" class="dropdown"></select>
     </div>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
