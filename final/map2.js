@@ -44,11 +44,12 @@ d3.json('structure_data.geojson')
                 features: data.features
             };
 
-            if (incidentSelect.value !== 'All Incidents') {
+            if (incidentSelect.value === '2025 Incidents') { filtered_data.features = filtered_data.features.filter(f => f.properties.INCIDENTSTARTYEAR === 2025); }
+            else if (incidentSelect.value !== 'All Incidents') {
                 filtered_data.features = filtered_data.features.filter(
                     f => f.properties.INCIDENTNAME === incidentSelect.value
                 );
-            } else { filtered_data.features = filtered_data.features.filter(f => f.properties.INCIDENTSTARTYEAR === 2025) }
+            }
 
             const selectedField = colorFieldSelect.value;
             const isQuantitative = quantitativeFields.includes(selectedField);
@@ -250,9 +251,9 @@ d3.json('structure_data.geojson')
                 .style("fill", "#333")
                 .style("visibility", "hidden")
                 .text(function (d) {
-                    const address = d.properties.ADDRESS || 'No Address Provided';
+                    const incn = d.properties.INCIDENTNAME || 'Unknown Incident';
                     const selectedValue = d.properties[selectedField] || 'No Value';
-                    return `${address} (${selectedField}: ${selectedValue})`;
+                    return `${incn}: (${selectedField}: ${selectedValue})`;
                 });
 
             // Add X axis
