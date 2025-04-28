@@ -7,11 +7,13 @@
 }
 
 .map-container {
-    width: 70%;
+    width: 100%;
 }
 
 .plot-container {
-    width: 28%;
+    width: 100%;
+    min-width: 400px;
+    min-height: 400px;
 }
 
 .container {
@@ -86,7 +88,7 @@
     margin-top: 5px;
 }
 
-.dropdown-container + .dropdown-container {
+.dropdown-container+.dropdown-container {
     margin-top: 15px;
 }
 

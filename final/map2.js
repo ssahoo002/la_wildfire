@@ -18,7 +18,11 @@ const colorFieldSelect = document.getElementById('colorFieldSelect');
 // GeoJSON data
 d3.json('structure_data_filtered.geojson')
     .then(data => {
-        const incidents = [...new Set(data.features.map(f => f.properties.INCIDENTNAME))].sort();
+        // Custom sort: Eaton, Palisades at top, All Incidents at bottom
+        let incidents = [...new Set(data.features.map(f => f.properties.INCIDENTNAME))];
+        incidents = incidents.filter(i => i !== 'Eaton' && i !== 'Palisades' && i !== 'All Incidents');
+        incidents.sort();
+        incidents = ['Eaton', 'Palisades', ...incidents, 'All Incidents'];
         incidents.forEach(incident => {
             const option = document.createElement('option');
             option.value = incident;
@@ -31,9 +35,47 @@ d3.json('structure_data_filtered.geojson')
         colorFields.forEach(field => {
             const option = document.createElement('option');
             option.value = field;
-            option.text = field;
+            option.text = toSentenceCase(field);
             colorFieldSelect.appendChild(option);
         });
+
+        // String attributes except date for parallel categories checkboxes
+        const parallelCatsStringFields = [
+            'DAMAGE', 'CITY', 'CALFIREUNIT', 'COUNTY', 'INCIDENTNAME',
+            'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
+            'VENTSCREEN', 'EXTERIORSIDING', 'WINDOWPANE', 'DECKPORCHONGRADE',
+            'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE', 'FIRENAME'
+        ];
+        const defaultCats = ['DAMAGE', 'STRUCTURETYPE', 'ROOFCONSTRUCTION'];
+        const checkboxesDiv = document.getElementById('parallelCatsCheckboxes');
+        checkboxesDiv.innerHTML = '';
+        parallelCatsStringFields.forEach(field => {
+            const label = document.createElement('label');
+            label.style.marginRight = '10px';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = field;
+            checkbox.checked = defaultCats.includes(field);
+            checkbox.className = 'parallel-cats-checkbox';
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(' ' + toSentenceCase(field)));
+            checkboxesDiv.appendChild(label);
+        });
+        // Track order of checked fields
+        let checkedCats = defaultCats.slice();
+        checkboxesDiv.addEventListener('change', (e) => {
+            if (e.target.classList.contains('parallel-cats-checkbox')) {
+                const val = e.target.value;
+                if (e.target.checked) {
+                    checkedCats.push(val);
+                } else {
+                    checkedCats = checkedCats.filter(f => f !== val);
+                }
+                updateParallelCategoriesPlot(lastFilteredData);
+            }
+        });
+        // Store last filtered data for checkbox updates
+        let lastFilteredData = null;
 
         function updateMap() {
             if (pointsLayer && map.hasLayer(pointsLayer)) map.removeLayer(pointsLayer);
@@ -170,7 +212,8 @@ d3.json('structure_data_filtered.geojson')
                 map.addControl(legend);
             }
 
-            updateScatterPlot(filtered_data);
+            updateParallelCategoriesPlot(filtered_data);
+            lastFilteredData = filtered_data;
 
             if (filtered_data.features.length > 0) {
                 const meanLat = d3.mean(filtered_data.features, f => +f.properties.Latitude);
@@ -179,115 +222,38 @@ d3.json('structure_data_filtered.geojson')
             }
         }
 
-        function updateScatterPlot(filtered_data) {
-            const svg = d3.select("#scatterPlot");
-            const margin = { top: 20, right: 20, bottom: 40, left: 40 };
-            const width = svg.attr("width") - margin.left - margin.right;
-            const height = svg.attr("height") - margin.top - margin.bottom;
-
-            // Clear existing plot
-            svg.selectAll("*").remove();
-
-            // Set up the plot area
-            const g = svg.append("g")
-                .attr("transform", `translate(${margin.left},${margin.top})`);
-
-            // X and Y scales
-            const x = d3.scaleLinear()
-                .domain(d3.extent(filtered_data.features, d => +d.properties.Longitude))
-                .range([0, width]);
-
-            const y = d3.scaleLinear()
-                .domain(d3.extent(filtered_data.features, d => +d.properties.Latitude))
-                .range([height, 0]);
-
-            const selectedField = colorFieldSelect.value;
-
-            // Add the scatter plot points
-            const points = g.selectAll(".dot")
-                .data(filtered_data.features)
-                .enter().append("g")
-                .attr("class", "dot-group")
-                .attr("transform", d => `translate(${x(+d.properties.Longitude)},${y(+d.properties.Latitude)})`)
-                .on("mouseover", function (event, d) {
-                    // Show label on hover
-                    d3.select(this).select(".label-box").style("visibility", "visible");
-                    d3.select(this).select(".label-text").style("visibility", "visible");
-                })
-                .on("mouseout", function (event, d) {
-                    // Hide label when not hovering
-                    d3.select(this).select(".label-box").style("visibility", "hidden");
-                    d3.select(this).select(".label-text").style("visibility", "hidden");
+        function updateParallelCategoriesPlot(filtered_data) {
+            const dimensions = checkedCats.length ? checkedCats : defaultCats;
+            const plotData = {};
+            dimensions.forEach(dim => plotData[dim] = []);
+            filtered_data.features.forEach(f => {
+                dimensions.forEach(dim => {
+                    plotData[dim].push(f.properties[dim] ?? "No Data");
                 });
-
-            // Add the circle
-            points.append("circle")
-                .attr("r", 5)
-                .style("fill", "#4a90e2")
-                .style("opacity", 0.7);
-
-            // Add the background box for the label (rect element)
-            points.append("rect")
-                .attr("class", "label-box")
-                .attr("x", 10)
-                .attr("y", -20)
-                .attr("rx", 5)
-                .attr("ry", 5)
-                .attr("width", 180)
-                .attr("height", 30)
-                .style("fill", "white")
-                .style("stroke", "#ccc")
-                .style("stroke-width", 1)
-                .style("visibility", "hidden")
-                .style("box-shadow", "2px 2px 5px rgba(0, 0, 0, 0.1)");
-
-            // Add the label text inside the box
-            points.append("text")
-                .attr("class", "label-text")
-                .attr("x", 15)
-                .attr("y", -5)
-                .style("font-size", "12px")
-                .style("font-family", "Arial, sans-serif")
-                .style("fill", "#333")
-                .style("visibility", "hidden")
-                .text(function (d) {
-                    const incn = d.properties.INCIDENTNAME || 'Unknown Incident';
-                    const selectedValue = d.properties[selectedField] || 'No Value';
-                    return `${incn}: (${selectedField}: ${selectedValue})`;
-                });
-
-            // Add X axis
-            g.append("g")
-                .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(x));
-
-            // Add Y axis
-            g.append("g")
-                .call(d3.axisLeft(y));
-
-            // Add axis labels
-            g.append("text")
-                .attr("x", width / 2)
-                .attr("y", height + 35)
-                .style("text-anchor", "middle")
-                .text("Longitude");
-
-            g.append("text")
-                .attr("transform", "rotate(-90)")
-                .attr("y", -40)
-                .attr("x", -height / 2)
-                .style("text-anchor", "middle")
-                .text("Latitude");
+            });
+            const plotlyDimensions = dimensions.map(dim => ({
+                label: dim,
+                values: plotData[dim]
+            }));
+            const data = [{
+                type: 'parcats',
+                dimensions: plotlyDimensions,
+                line: {
+                    color: 'blue',
+                    shape: 'hspline'
+                }
+            }];
+            const layout = {
+                height: 400,
+                margin: { t: 30, l: 20, r: 20, b: 40 },
+                font: { size: 12 }
+            };
+            Plotly.react('parallelCatsPlot', data, layout, { displayModeBar: false });
         }
 
-
-
-
-        // Event listeners
         incidentSelect.addEventListener('change', updateMap);
         colorFieldSelect.addEventListener('change', updateMap);
 
-        // update scatter with every zoom
         map.on('moveend', () => {
             if (pointsLayer) {
                 const bounds = map.getBounds();
@@ -297,7 +263,7 @@ d3.json('structure_data_filtered.geojson')
                     return bounds.contains([lat, lng]);
                 });
 
-                updateScatterPlot({ type: "FeatureCollection", features: visibleFeatures });
+                updateParallelCategoriesPlot({ type: "FeatureCollection", features: visibleFeatures });
             }
         });
 
@@ -320,3 +286,11 @@ d3.json('structure_data_filtered.geojson')
         updateMap();
     })
     .catch(error => console.error('Error loading GeoJSON:', error));
+
+function toSentenceCase(str) {
+    return str
+        .replace(/([A-Z])/g, '$1')
+        .trim()
+        .toLowerCase()
+        .replace(/^./, s => s.toUpperCase());
+}
