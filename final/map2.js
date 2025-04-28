@@ -16,7 +16,7 @@ const incidentSelect = document.getElementById('incidentSelect');
 const colorFieldSelect = document.getElementById('colorFieldSelect');
 
 // GeoJSON data
-d3.json('structure_data.geojson')
+d3.json('structure_data_filtered.geojson')
     .then(data => {
         const incidents = [...new Set(data.features.map(f => f.properties.INCIDENTNAME))].sort();
         incidents.forEach(incident => {
@@ -194,11 +194,11 @@ d3.json('structure_data.geojson')
 
             // X and Y scales
             const x = d3.scaleLinear()
-                .domain(d3.extent(filtered_data.features, d => +d.properties.YEARBUILT))
+                .domain(d3.extent(filtered_data.features, d => +d.properties.Longitude))
                 .range([0, width]);
 
             const y = d3.scaleLinear()
-                .domain(d3.extent(filtered_data.features, d => +d.properties.ASSESSEDIMPROVEDVALUE))
+                .domain(d3.extent(filtered_data.features, d => +d.properties.Latitude))
                 .range([height, 0]);
 
             const selectedField = colorFieldSelect.value;
@@ -208,7 +208,7 @@ d3.json('structure_data.geojson')
                 .data(filtered_data.features)
                 .enter().append("g")
                 .attr("class", "dot-group")
-                .attr("transform", d => `translate(${x(+d.properties.YEARBUILT)},${y(+d.properties.ASSESSEDIMPROVEDVALUE)})`)
+                .attr("transform", d => `translate(${x(+d.properties.Longitude)},${y(+d.properties.Latitude)})`)
                 .on("mouseover", function (event, d) {
                     // Show label on hover
                     d3.select(this).select(".label-box").style("visibility", "visible");
@@ -270,14 +270,14 @@ d3.json('structure_data.geojson')
                 .attr("x", width / 2)
                 .attr("y", height + 35)
                 .style("text-anchor", "middle")
-                .text("YEAR BUILT");
+                .text("Longitude");
 
             g.append("text")
                 .attr("transform", "rotate(-90)")
                 .attr("y", -40)
                 .attr("x", -height / 2)
                 .style("text-anchor", "middle")
-                .text("ASSESSED IMPROVED VALUE");
+                .text("Latitude");
         }
 
 
