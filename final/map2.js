@@ -1,28 +1,31 @@
-// center of LA
+// init map
 const map = L.map('map').setView([34.0522, -118.2437], 10);
 
+// add tile layer
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
+// legend control
 const legend = L.control({ position: 'topright' });
 
+// layer variables
 let pointsLayer;
 let heatmapLayer;
 
+// ui element references
 const pointsButton = document.getElementById('pointsButton');
 const heatmapButton = document.getElementById('heatmapButton');
 const incidentSelect = document.getElementById('incidentSelect');
 const colorFieldSelect = document.getElementById('colorFieldSelect');
 
-// GeoJSON data
+// load geojson data
 d3.json('structure_data_filtered.geojson')
     .then(data => {
-        // Custom sort: Eaton, Palisades at top, All Incidents at bottom
         let incidents = [...new Set(data.features.map(f => f.properties.INCIDENTNAME))];
         incidents = incidents.filter(i => i !== 'Eaton' && i !== 'Palisades' && i !== 'All Incidents');
         incidents.sort();
-        incidents = ['Eaton', 'Palisades', ...incidents, 'All Incidents'];
+        incidents = ['Eaton', 'Palisades', ...incidents];
         incidents.forEach(incident => {
             const option = document.createElement('option');
             option.value = incident;
@@ -39,7 +42,6 @@ d3.json('structure_data_filtered.geojson')
             colorFieldSelect.appendChild(option);
         });
 
-        // String attributes except date for parallel categories checkboxes
         const parallelCatsStringFields = [
             'DAMAGE', 'CITY', 'CALFIREUNIT', 'COUNTY', 'INCIDENTNAME',
             'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
@@ -61,7 +63,6 @@ d3.json('structure_data_filtered.geojson')
             label.appendChild(document.createTextNode(' ' + toSentenceCase(field)));
             checkboxesDiv.appendChild(label);
         });
-        // Track order of checked fields
         let checkedCats = defaultCats.slice();
         checkboxesDiv.addEventListener('change', (e) => {
             if (e.target.classList.contains('parallel-cats-checkbox')) {
@@ -74,20 +75,29 @@ d3.json('structure_data_filtered.geojson')
                 updateParallelCategoriesPlot(lastFilteredData);
             }
         });
-        // Store last filtered data for checkbox updates
         let lastFilteredData = null;
 
+        // main update function
         function updateMap() {
-            if (pointsLayer && map.hasLayer(pointsLayer)) map.removeLayer(pointsLayer);
-            if (heatmapLayer && map.hasLayer(heatmapLayer)) map.removeLayer(heatmapLayer);
+            // remove old layers
+            if (pointsLayer && map.hasLayer(pointsLayer)) {
+                map.removeLayer(pointsLayer);
+                pointsLayer = null;
+            }
+            if (heatmapLayer && map.hasLayer(heatmapLayer)) {
+                map.removeLayer(heatmapLayer);
+                heatmapLayer = null;
+            }
 
             let filtered_data = {
                 ...data,
                 features: data.features
             };
 
-            if (incidentSelect.value === '2025 Incidents') { filtered_data.features = filtered_data.features.filter(f => f.properties.INCIDENTSTARTYEAR === 2025); }
-            else if (incidentSelect.value !== 'All Incidents') {
+            // filter data by incident
+            if (incidentSelect.value === '2025 Incidents') {
+                filtered_data.features = filtered_data.features.filter(f => f.properties.INCIDENTSTARTYEAR === 2025);
+            } else {
                 filtered_data.features = filtered_data.features.filter(
                     f => f.properties.INCIDENTNAME === incidentSelect.value
                 );
@@ -96,9 +106,9 @@ d3.json('structure_data_filtered.geojson')
             const selectedField = colorFieldSelect.value;
             const isQuantitative = quantitativeFields.includes(selectedField);
 
-            // null filter
             const validFeatures = filtered_data.features.filter(f => f.properties[selectedField] !== null && f.properties[selectedField] !== undefined);
 
+            // color scale setup
             let colorScale;
             if (isQuantitative) {
                 const numericValues = validFeatures
@@ -117,6 +127,7 @@ d3.json('structure_data_filtered.geojson')
                     .range(d3.schemeSet3.concat(d3.schemePastel1).slice(0, uniqueVals.length));
             }
 
+            // legend setup
             legend.onAdd = function () {
                 const div = L.DomUtil.create('div', 'legend');
                 div.innerHTML = `<h4>${selectedField}</h4>`;
@@ -141,7 +152,6 @@ d3.json('structure_data_filtered.geojson')
                     });
                 }
 
-                // null black
                 div.innerHTML += `
                     <div>
                         <span style="background:black"></span>
@@ -151,7 +161,7 @@ d3.json('structure_data_filtered.geojson')
                 return div;
             };
 
-            // Points layer
+            // create points layer
             pointsLayer = L.geoJSON(filtered_data, {
                 pointToLayer: (feature, latlng) => {
                     const lat = parseFloat(feature.properties.Latitude);
@@ -178,7 +188,7 @@ d3.json('structure_data_filtered.geojson')
                 }
             });
 
-            // Heatmap layer
+            // create heatmap layer
             const heatmapData = filtered_data.features.map(f => [
                 parseFloat(f.properties.Latitude),
                 parseFloat(f.properties.Longitude),
@@ -204,6 +214,7 @@ d3.json('structure_data_filtered.geojson')
                 }
             });
 
+            // add correct layer to map
             if (heatmapButton.classList.contains('active')) {
                 heatmapLayer.addTo(map);
                 map.removeControl(legend);
@@ -212,17 +223,34 @@ d3.json('structure_data_filtered.geojson')
                 map.addControl(legend);
             }
 
+            // update parallel categories plot
             updateParallelCategoriesPlot(filtered_data);
             lastFilteredData = filtered_data;
 
+            // fit map to bounds if needed
             if (filtered_data.features.length > 0) {
-                const meanLat = d3.mean(filtered_data.features, f => +f.properties.Latitude);
-                const meanLng = d3.mean(filtered_data.features, f => +f.properties.Longitude);
-                map.setView([meanLat, meanLng], 10);
+                const latlngs = filtered_data.features.map(f => [
+                    +f.properties.Latitude,
+                    +f.properties.Longitude
+                ]);
+                const bounds = L.latLngBounds(latlngs);
+                if (
+                    updateMap.cause === 'dropdown' ||
+                    (updateMap.cause === 'colorField' && sampledFeatures.length === 0)
+                ) {
+                    map.fitBounds(bounds, { padding: [30, 30] });
+                }
             }
+
+            // cleanup large arrays
+            filtered_data = null;
+            validFeatures = null;
+            visibleFeatures = null;
         }
 
+        // update parallel categories plot
         function updateParallelCategoriesPlot(filtered_data) {
+            if (!filtered_data || !filtered_data.features || filtered_data.features.length === 0) return;
             const dimensions = checkedCats.length ? checkedCats : defaultCats;
             const plotData = {};
             dimensions.forEach(dim => plotData[dim] = []);
@@ -251,9 +279,21 @@ d3.json('structure_data_filtered.geojson')
             Plotly.react('parallelCatsPlot', data, layout, { displayModeBar: false });
         }
 
-        incidentSelect.addEventListener('change', updateMap);
-        colorFieldSelect.addEventListener('change', updateMap);
-
+        // handle dropdown changes
+        function triggerUpdateMapDropdown() {
+            updateMap.cause = 'dropdown';
+            updateMap();
+            updateMap.cause = undefined;
+        }
+        function triggerUpdateMapColorField() {
+            updateMap.cause = 'colorField';
+            updateMap();
+            updateMap.cause = undefined;
+        }
+        // add event listeners
+        incidentSelect.addEventListener('change', triggerUpdateMapDropdown);
+        colorFieldSelect.addEventListener('change', triggerUpdateMapColorField);
+        // update plot on map move
         map.on('moveend', () => {
             if (pointsLayer) {
                 const bounds = map.getBounds();
@@ -267,6 +307,7 @@ d3.json('structure_data_filtered.geojson')
             }
         });
 
+        // points/heatmap button listeners
         pointsButton.addEventListener('click', () => {
             pointsButton.classList.add('active');
             heatmapButton.classList.remove('active');
@@ -283,10 +324,12 @@ d3.json('structure_data_filtered.geojson')
             map.removeControl(legend);
         });
 
+        // initial map update
         updateMap();
     })
     .catch(error => console.error('Error loading GeoJSON:', error));
 
+// helper: convert to sentence case
 function toSentenceCase(str) {
     return str
         .replace(/([A-Z])/g, '$1')
