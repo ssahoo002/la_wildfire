@@ -178,11 +178,86 @@ d3.json('structure_data_filtered.geojson')
             Plotly.react('lineChart', traces, layout, { displayModeBar: false });
         }
 
+        // --- Cramér's V Bar Chart ---
+        function cramersV(x, y) {
+            // x and y are arrays of categorical values (strings or numbers)
+            // Returns Cramér's V statistic
+            const n = x.length;
+            if (n === 0) return 0;
+            // Get unique values
+            const xCats = Array.from(new Set(x));
+            const yCats = Array.from(new Set(y));
+            // Build contingency table
+            const table = Array.from({ length: xCats.length }, () => Array(yCats.length).fill(0));
+            for (let i = 0; i < n; ++i) {
+                const xi = xCats.indexOf(x[i]);
+                const yi = yCats.indexOf(y[i]);
+                if (xi !== -1 && yi !== -1) table[xi][yi] += 1;
+            }
+            // Row/col sums
+            const rowSums = table.map(row => row.reduce((a, b) => a + b, 0));
+            const colSums = yCats.map((_, j) => table.reduce((a, row) => a + row[j], 0));
+            // Expected counts
+            const expected = table.map((row, i) =>
+                row.map((_, j) => rowSums[i] * colSums[j] / n)
+            );
+            // Chi-squared
+            let chi2 = 0;
+            for (let i = 0; i < xCats.length; ++i) {
+                for (let j = 0; j < yCats.length; ++j) {
+                    if (expected[i][j] > 0) {
+                        chi2 += Math.pow(table[i][j] - expected[i][j], 2) / expected[i][j];
+                    }
+                }
+            }
+            const k = Math.min(xCats.length, yCats.length);
+            return Math.sqrt(chi2 / (n * (k - 1)));
+        }
+
+        function updateCramersVBarChart(filtered_data) {
+            if (!filtered_data || !filtered_data.features || filtered_data.features.length === 0) {
+                Plotly.purge('cramersVBarChart');
+                return;
+            }
+            const dimensions = checkedCats.length ? checkedCats : defaultCats;
+            // Only show pairs where one is DAMAGE and the other is not DAMAGE
+            const pairs = [];
+            for (let i = 0; i < dimensions.length; ++i) {
+                if (dimensions[i] === 'DAMAGE') {
+                    for (let j = 0; j < dimensions.length; ++j) {
+                        if (i !== j && dimensions[j] !== 'DAMAGE') {
+                            pairs.push(['DAMAGE', dimensions[j]]);
+                        }
+                    }
+                }
+            }
+            const values = pairs.map(([a, b]) => {
+                const x = filtered_data.features.map(f => f.properties[a] ?? 'No Data');
+                const y = filtered_data.features.map(f => f.properties[b] ?? 'No Data');
+                return cramersV(x, y);
+            });
+            const labels = pairs.map(([a, b]) => `${a} vs ${b}`);
+            const data = [{
+                x: labels,
+                y: values,
+                type: 'bar',
+                marker: { color: '#4a90e2' }
+            }];
+            const layout = {
+                height: 320,
+                margin: { t: 20, l: 40, r: 10, b: 80 },
+                yaxis: { title: "Cramér's V", range: [0, 1] },
+                xaxis: { tickangle: -45 },
+            };
+            Plotly.react('cramersVBarChart', data, layout, { displayModeBar: false });
+        }
+
         // --- Update all visualizations on map/filter changes ---
         function updateAllVisualizations(filtered_data) {
             updateParallelCategoriesPlot(filtered_data);
             updatePieChart(filtered_data);
             updateLineChart(filtered_data);
+            updateCramersVBarChart(filtered_data);
         }
 
         // main update function
@@ -385,6 +460,8 @@ d3.json('structure_data_filtered.geojson')
                 font: { size: 12 }
             };
             Plotly.react('parallelCatsPlot', data, layout, { displayModeBar: false });
+            // Also update Cramér's V bar chart to reflect current columns
+            updateCramersVBarChart(filtered_data);
         }
 
         // handle dropdown changes
