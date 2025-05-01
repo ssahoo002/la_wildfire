@@ -19,9 +19,24 @@ const heatmapButton = document.getElementById('heatmapButton');
 const incidentSelect = document.getElementById('incidentSelect');
 const colorFieldSelect = document.getElementById('colorFieldSelect');
 
-// load geojson data
-d3.json('structure_data_filtered.geojson')
-    .then(data => {
+const files = [
+    'data_split/1.geojso',
+    'data_split/2.geojso',
+    'data_split/3.geojso',
+    'data_split/4.geojso',
+    'data_split/5.geojso',
+];
+
+// Load all files in parallel
+Promise.all(files.map(f => d3.json(f)))
+    .then(datasets => {
+        // Merge all features into one array
+        const allFeatures = datasets.flatMap(d => d.features);
+        // Create a single GeoJSON FeatureCollection
+        const data = {
+            type: "FeatureCollection",
+            features: allFeatures
+        };
         let incidents = [...new Set(data.features.map(f => f.properties.INCIDENTNAME))];
         incidents = incidents.filter(i => i !== 'Eaton' && i !== 'Palisades' && i !== 'All Incidents');
         incidents.sort();
