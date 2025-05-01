@@ -77,6 +77,114 @@ d3.json('structure_data_filtered.geojson')
         });
         let lastFilteredData = null;
 
+        // --- Pie Chart ---
+        function updatePieChart(filtered_data) {
+            if (!filtered_data || !filtered_data.features || filtered_data.features.length === 0) {
+                Plotly.purge('pieChart');
+                return;
+            }
+            const selectedField = colorFieldSelect.value;
+            const counts = {};
+            filtered_data.features.forEach(f => {
+                let val = f.properties[selectedField];
+                if (val === null || val === undefined) val = 'No Data';
+                counts[val] = (counts[val] || 0) + 1;
+            });
+            const labels = Object.keys(counts);
+            const values = labels.map(l => counts[l]);
+            const data = [{
+                type: 'pie',
+                labels: labels,
+                values: values,
+                textinfo: 'label+percent',
+                hoverinfo: 'label+value+percent',
+                marker: { line: { color: '#fff', width: 1 } }
+            }];
+            const layout = {
+                height: 320,
+                margin: { t: 20, l: 10, r: 10, b: 10 },
+                showlegend: false
+            };
+            Plotly.react('pieChart', data, layout, { displayModeBar: false });
+        }
+
+        // --- Cumulative Line Chart ---
+        function updateLineChart(filtered_data) {
+            if (!filtered_data || !filtered_data.features || filtered_data.features.length === 0) {
+                Plotly.purge('lineChart');
+                return;
+            }
+            const selectedField = colorFieldSelect.value;
+            // Use INCIDENTSTARTDATE or YEARBUILT as time axis if available
+            let timeField = 'INCIDENTSTARTDATE';
+            if (!filtered_data.features[0].properties[timeField]) {
+                timeField = 'YEARBUILT';
+            }
+            // Parse dates and group by category
+            const categoryMap = {};
+            filtered_data.features.forEach(f => {
+                if (!categoryMap[f.properties[selectedField]]) categoryMap[f.properties[selectedField]] = [];
+                categoryMap[f.properties[selectedField]].push(Date.parse(f.properties[timeField]));
+                /*let cat = f.properties[selectedField];
+                if (cat === null || cat === undefined) cat = 'No Data';
+                let t = f.properties[timeField];
+                if (!t) return;
+                // Try to parse as date or year
+                let date;
+                if (typeof t === 'string' && t.match(/^\d{4}-\d{2}-\d{2}/)) {
+                    date = new Date(t);
+                } else if (!isNaN(+t)) {
+                    date = new Date(+t, 0, 1);
+                } else {
+                    return;
+                }
+                if (!categoryMap[cat]) categoryMap[cat] = [];
+                categoryMap[cat].push(date);*/
+            });
+            // For each category, build cumulative count over time
+            const traces = [];
+            Object.entries(categoryMap).forEach(([cat, dates]) => {
+                // Sort dates
+                dates.sort((a, b) => a - b);
+                // Build cumulative
+                const dateCounts = {};
+                dates.forEach(d => {
+                    const key = d;/*.toISOString().slice(0, 10);*/
+                    dateCounts[key] = (dateCounts[key] || 0) + 1;
+                });
+                // Build cumulative array
+                const sortedKeys = Object.keys(dateCounts).sort();
+                let cum = 0;
+                const x = [], y = [];
+                sortedKeys.forEach(k => {
+                    cum += dateCounts[k];
+                    x.push(k);
+                    y.push(cum);
+                });
+                traces.push({
+                    x, y,
+                    mode: 'lines+markers',
+                    name: cat,
+                    line: { width: 2 }
+                });
+            });
+            const layout = {
+                height: 320,
+                margin: { t: 20, l: 40, r: 10, b: 40 },
+                xaxis: { title: 'Date', type: 'date', tickformat: '%Y-%m-%d' },
+                yaxis: { title: 'Cumulative Count' },
+                legend: { orientation: 'h', y: -0.2 }
+            };
+            Plotly.react('lineChart', traces, layout, { displayModeBar: false });
+        }
+
+        // --- Update all visualizations on map/filter changes ---
+        function updateAllVisualizations(filtered_data) {
+            updateParallelCategoriesPlot(filtered_data);
+            updatePieChart(filtered_data);
+            updateLineChart(filtered_data);
+        }
+
         // main update function
         function updateMap() {
             // remove old layers
@@ -106,7 +214,7 @@ d3.json('structure_data_filtered.geojson')
             const selectedField = colorFieldSelect.value;
             const isQuantitative = quantitativeFields.includes(selectedField);
 
-            const validFeatures = filtered_data.features.filter(f => f.properties[selectedField] !== null && f.properties[selectedField] !== undefined);
+            var validFeatures = filtered_data.features.filter(f => f.properties[selectedField] !== null && f.properties[selectedField] !== undefined);
 
             // color scale setup
             let colorScale;
@@ -223,8 +331,8 @@ d3.json('structure_data_filtered.geojson')
                 map.addControl(legend);
             }
 
-            // update parallel categories plot
-            updateParallelCategoriesPlot(filtered_data);
+            // update all visualizations
+            updateAllVisualizations(filtered_data);
             lastFilteredData = filtered_data;
 
             // fit map to bounds if needed
@@ -302,8 +410,8 @@ d3.json('structure_data_filtered.geojson')
                     const lng = parseFloat(f.geometry.coordinates[0]);
                     return bounds.contains([lat, lng]);
                 });
-
-                updateParallelCategoriesPlot({ type: "FeatureCollection", features: visibleFeatures });
+                const visibleData = { type: "FeatureCollection", features: visibleFeatures };
+                updateAllVisualizations(visibleData);
             }
         });
 

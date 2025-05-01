@@ -133,3 +133,15 @@
     font-family: Arial, sans-serif;
     visibility: hidden;
 }
+
+#visualizations {
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+#pieChart, #lineChart {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 2px 6px #0001;
+}

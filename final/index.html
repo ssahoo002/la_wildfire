@@ -14,8 +14,16 @@
             <div id="map"></div>
         </div>
         <div class="plot-container">
-            <div id="parallelCatsPlot" style="width:100%;height:500px;"></div>
+            <div id="parallelCatsPlot" style="width:100%;height:400px;"></div>
             <div class="checkbox-container" id="parallelCatsCheckboxes" style="margin-top:10px; width:100%;"></div>
+        </div>
+    </div>
+    <div id="visualizations" style="display: flex; gap: 30px; margin-top: 30px;">
+        <div>
+            <div id="pieChart" style="width:350px;height:350px;"></div>
+        </div>
+        <div>
+            <div id="lineChart" style="width:500px;height:350px;"></div>
         </div>
     </div>
     <div class="button-group">
@@ -27,7 +35,6 @@
             <label for="incidentSelect">Select Incident:</label>
             <select id="incidentSelect" class="dropdown">
                 <option value="2025 Incidents">2025 Incidents</option>
-                <option value="All Incidents">All Incidents</option>
             </select>
         </div>
     </div>
@@ -35,6 +42,7 @@
         <label for="colorFieldSelect">Color Points By:</label>
         <select id="colorFieldSelect" class="dropdown"></select>
     </div>
+
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
