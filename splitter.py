@@ -25,14 +25,11 @@ def split_geojson(input_file, output_dir, max_size):
     current_features = []
     current_size = 0
 
+    # This loops while the size of remaining features is greater than individual max file size
     for feature in features:
         feature_size = len(json.dumps(feature).encode('utf-8'))
         if current_size + feature_size > max_size and current_features:
-            # Write the current batch to a file
-            output_file = os.path.join(output_dir, f"split_part_{part}.geojson")
-            with open(output_file, 'w') as out_f:
-                json.dump({"type": "FeatureCollection", "features": current_features}, out_f)
-            print(f"Written {output_file} with {len(current_features)} features.")
+            save_geojson(output_dir, part, current_features)
             part += 1
             current_features = []
             current_size = 0
@@ -40,12 +37,15 @@ def split_geojson(input_file, output_dir, max_size):
         current_features.append(feature)
         current_size += feature_size
 
-    # Write the remaining features to a file
+    # Writes leftovers
     if current_features:
-        output_file = os.path.join(output_dir, f"{part}.geojso")
-        with open(output_file, 'w') as out_f:
-            json.dump({"type": "FeatureCollection", "features": current_features}, out_f)
-        print(f"Written {output_file} with {len(current_features)} features.")
+        save_geojson(output_dir, part, current_features)
+
+def save_geojson(output_dir, part, current_features):
+    output_file = os.path.join(output_dir, f"{part}.geojso")
+    with open(output_file, 'w') as out_f:
+        json.dump({"type": "FeatureCollection", "features": current_features}, out_f)
+    print(f"Written {output_file} with {len(current_features)} features.")
 
 # Example usage
-split_geojson("structure_data_filtered.geojson", "data_split", 25165824)  # Max size in bytes
+split_geojson("structure_data_filtered.geojson", "final/data_split", 26214400)  # Max size in bytes

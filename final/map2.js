@@ -74,6 +74,11 @@ Promise.all(files.map(f => d3.json(f)))
             checkbox.value = field;
             checkbox.checked = defaultCats.includes(field);
             checkbox.className = 'parallel-cats-checkbox';
+            // always show Damage, disable its checkbox
+            if (field === 'DAMAGE') {
+                checkbox.checked = true;
+                checkbox.disabled = true;
+            }
             label.appendChild(checkbox);
             label.appendChild(document.createTextNode(' ' + toSentenceCase(field)));
             checkboxesDiv.appendChild(label);
@@ -131,7 +136,7 @@ Promise.all(files.map(f => d3.json(f)))
                 Plotly.purge('lineChart');
                 return;
             }
-            const selectedField = colorFieldSelect.value;
+            const selectedField = "CALFIREUNIT"; // temp workaround to get single category showing
             // Use INCIDENTSTARTDATE or YEARBUILT as time axis if available
             let timeField = 'INCIDENTSTARTDATE';
             if (!filtered_data.features[0].properties[timeField]) {
@@ -188,7 +193,7 @@ Promise.all(files.map(f => d3.json(f)))
             const layout = {
                 height: 320,
                 margin: { t: 20, l: 40, r: 10, b: 40 },
-                xaxis: { title: 'Date', type: 'date', tickformat: '%Y-%m-%d' },
+                xaxis: { title: 'Date', type: 'date', tickformat: '%Y-%m-%d\n%H:%M' },
                 yaxis: { title: 'Cumulative Count' },
                 // legend: { orientation: 'h', y: -0.2 },
                 legend: {
@@ -197,7 +202,7 @@ Promise.all(files.map(f => d3.json(f)))
                     y: -0.35,          // changed from 0.001 to -0.15
                     orientation: 'h',
                     font: { size: 10 },
-                  }
+                }
                 // automargin: true
             };
             Plotly.react('lineChart', traces, layout, { displayModeBar: false });
@@ -244,6 +249,7 @@ Promise.all(files.map(f => d3.json(f)))
                 Plotly.purge('cramersVBarChart');
                 return;
             }
+            // add title to bar chart
             const dimensions = checkedCats.length ? checkedCats : defaultCats;
             // Only show pairs where one is DAMAGE and the other is not DAMAGE
             const pairs = [];
@@ -261,7 +267,7 @@ Promise.all(files.map(f => d3.json(f)))
                 const y = filtered_data.features.map(f => f.properties[b] ?? 'No Data');
                 return cramersV(x, y);
             });
-            const labels = pairs.map(([a, b]) => `${a} vs ${b}`);
+            const labels = pairs.map(([a, b]) => `${toSentenceCase(b)}`);
             const data = [{
                 x: labels,
                 y: values,
@@ -270,9 +276,10 @@ Promise.all(files.map(f => d3.json(f)))
             }];
             const layout = {
                 height: 320,
-                margin: { t: 20, l: 40, r: 10, b: 80 },
+                margin: { t: 50, l: 40, r: 10, b: 80 },
                 yaxis: { title: "Cramér's V", range: [0, 1] },
-                xaxis: { tickangle: -45 , automargin: true},
+                xaxis: { tickangle: -45, automargin: true },
+                title: { text: 'Correlation between damage and other attributes', font: { size: 18 }, xref: 'container', x: 0.5 }
             };
             Plotly.react('cramersVBarChart', data, layout, { displayModeBar: false });
         }
