@@ -360,6 +360,7 @@ Promise.all(files.map(f => d3.json(f)))
         // --- Update all visualizations on map/filter changes ---
         function updateAllVisualizations(filtered_data) {
             window.currentFilteredData = filtered_data;
+            document.getElementById('incidentCount').innerText = `Incident(s) Shown: ${filtered_data.features.length}`;
             updateParallelCategoriesPlot(filtered_data);
             updateBarPieChart(filtered_data);
             updateLineChart(filtered_data);
