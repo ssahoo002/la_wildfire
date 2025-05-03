@@ -27,7 +27,7 @@ const files = [
     'data_split/2.geojso',
     'data_split/3.geojso',
     'data_split/4.geojso',
-    'data_split/5.geojso',
+    'data_split/5.geojso'
 ];
 
 // Load all files in parallel
@@ -485,8 +485,16 @@ Promise.all(files.map(f => d3.json(f)))
                         fillOpacity: 0.8
                     };
 
-                    return L.circleMarker([lat, lng], markerOptions)
-                        .bindTooltip(`<strong>${feature.properties.INCIDENTNAME}</strong><br>${selectedField}: ${value ?? 'null'}`);
+                    var str = `<strong>${feature.properties.INCIDENTNAME}</strong><br>${selectedField}: ${value ?? 'null'}`;
+
+
+                    if (selectedField !== 'DAMAGE')
+                        str += `<br>Damage: ${feature.properties.DAMAGE ?? 'null'}`;
+
+                    var returned = L.circleMarker([lat, lng], markerOptions)
+                        .bindTooltip(str);
+
+                    return returned;
                 }
             });
 
