@@ -16,6 +16,7 @@ let heatmapLayer;
 // ui element references
 const pointsButton = document.getElementById('pointsButton');
 const heatmapButton = document.getElementById('heatmapButton');
+const yearSelect = document.getElementById('yearSelect');
 const incidentSelect = document.getElementById('incidentSelect');
 const colorFieldSelect = document.getElementById('colorFieldSelect');
 
@@ -37,6 +38,40 @@ Promise.all(files.map(f => d3.json(f)))
             type: "FeatureCollection",
             features: allFeatures
         };
+        // --- Build year dropdown ---
+        const years = [...new Set(data.features.map(f => f.properties.INCIDENTSTARTYEAR))].filter(y => y).sort((a, b) => b - a);
+        yearSelect.innerHTML = '';
+        years.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.text = year;
+            yearSelect.appendChild(option);
+        });
+        // Set default year to 2025 if present
+        if (years.includes(2025)) yearSelect.value = 2025;
+        // --- Build incident dropdown for selected year ---
+        function populateIncidentDropdown(selectedYear) {
+            const incidentsForYear = [...new Set(data.features.filter(f => f.properties.INCIDENTSTARTYEAR == selectedYear).map(f => f.properties.INCIDENTNAME))].sort();
+            incidentSelect.innerHTML = '';
+            const allOption = document.createElement('option');
+            allOption.value = 'All Incidents';
+            allOption.text = 'All Incidents';
+            incidentSelect.appendChild(allOption);
+            incidentsForYear.forEach(incident => {
+                const option = document.createElement('option');
+                option.value = incident;
+                option.text = incident;
+                incidentSelect.appendChild(option);
+            });
+            incidentSelect.value = 'All Incidents';
+        }
+        // Initial population
+        populateIncidentDropdown(yearSelect.value);
+        // Update incident dropdown when year changes
+        yearSelect.addEventListener('change', function () {
+            populateIncidentDropdown(this.value);
+            triggerUpdateMapDropdown();
+        });
         let incidents = [...new Set(data.features.map(f => f.properties.INCIDENTNAME))];
         incidents = incidents.filter(i => i !== 'Eaton' && i !== 'Palisades' && i !== 'All Incidents');
         incidents.sort();
@@ -48,7 +83,7 @@ Promise.all(files.map(f => d3.json(f)))
             incidentSelect.appendChild(option);
         });
 
-        const colorFields = ['DAMAGE', 'STRUCTURETYPE', 'STREETTYPE', 'CALFIREUNIT', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EXTERIORSIDING', 'YEARBUILT'];
+        const colorFields = ['DAMAGE', 'STRUCTURETYPE', 'STREETTYPE', 'CALFIREUNIT', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EXTERIORSIDING', 'DECADEBUILT'];
         const quantitativeFields = ['YEARBUILT'];
         colorFields.forEach(field => {
             const option = document.createElement('option');
@@ -61,7 +96,8 @@ Promise.all(files.map(f => d3.json(f)))
             'DAMAGE', 'CITY', 'CALFIREUNIT', 'COUNTY', 'INCIDENTNAME',
             'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
             'VENTSCREEN', 'EXTERIORSIDING', 'WINDOWPANE', 'DECKPORCHONGRADE',
-            'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE', 'FIRENAME'
+            'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE', 'FIRENAME',
+            'DECADEBUILT'
         ];
         const defaultCats = ['DAMAGE', 'STRUCTURETYPE', 'ROOFCONSTRUCTION'];
         const checkboxesDiv = document.getElementById('parallelCatsCheckboxes');
@@ -136,7 +172,7 @@ Promise.all(files.map(f => d3.json(f)))
                 Plotly.purge('lineChart');
                 return;
             }
-            const selectedField = "CALFIREUNIT"; // temp workaround to get single category showing
+            const selectedField = "INCIDENTNAME"; // temp workaround to get single category showing
             // Use INCIDENTSTARTDATE or YEARBUILT as time axis if available
             let timeField = 'INCIDENTSTARTDATE';
             if (!filtered_data.features[0].properties[timeField]) {
@@ -192,18 +228,10 @@ Promise.all(files.map(f => d3.json(f)))
             });
             const layout = {
                 height: 320,
-                margin: { t: 20, l: 40, r: 10, b: 40 },
-                xaxis: { title: 'Date', type: 'date', tickformat: '%Y-%m-%d\n%H:%M' },
-                yaxis: { title: 'Cumulative Count' },
-                // legend: { orientation: 'h', y: -0.2 },
-                legend: {
-                    itemwidth: 100,
-                    yref: 'paper',     // changed from 'container' to 'paper'
-                    y: -0.35,          // changed from 0.001 to -0.15
-                    orientation: 'h',
-                    font: { size: 10 },
-                }
-                // automargin: true
+                margin: { t: 20, l: 60, r: 10, b: 60 },
+                xaxis: { title: { text: 'Date', standoff: 20 }, type: 'date', tickformat: '%Y-%m-%d %H:%M', automargin: true },
+                yaxis: { title: { text: 'Cumulative Count', standoff: 20 }, automargin: true },
+                showlegend: false
             };
             Plotly.react('lineChart', traces, layout, { displayModeBar: false });
         }
@@ -279,7 +307,7 @@ Promise.all(files.map(f => d3.json(f)))
                 margin: { t: 50, l: 40, r: 10, b: 80 },
                 yaxis: { title: "Cramér's V", range: [0, 1] },
                 xaxis: { tickangle: -45, automargin: true },
-                title: { text: 'Correlation between damage and other attributes', font: { size: 18 }, xref: 'container', x: 0.5 }
+                title: { text: 'Correlation between damage and...', font: { size: 18 }, xref: 'container', x: 0.5 }
             };
             Plotly.react('cramersVBarChart', data, layout, { displayModeBar: false });
         }
@@ -290,6 +318,13 @@ Promise.all(files.map(f => d3.json(f)))
             updatePieChart(filtered_data);
             updateLineChart(filtered_data);
             updateCramersVBarChart(filtered_data);
+            // show popup if no data
+            if (!filtered_data || !filtered_data.features || filtered_data.features.length === 0) {
+                showNoDataPopup();
+                document.getElementById('parallelCatsCheckboxes').hidden = true;
+            } else {
+                document.getElementById('parallelCatsCheckboxes').hidden = false;
+            }
         }
 
         // main update function
@@ -309,10 +344,9 @@ Promise.all(files.map(f => d3.json(f)))
                 features: data.features
             };
 
-            // filter data by incident
-            if (incidentSelect.value === '2025 Incidents') {
-                filtered_data.features = filtered_data.features.filter(f => f.properties.INCIDENTSTARTYEAR === 2025);
-            } else {
+            // filter data by year and incident
+            filtered_data.features = filtered_data.features.filter(f => f.properties.INCIDENTSTARTYEAR == yearSelect.value);
+            if (incidentSelect.value !== 'All Incidents') {
                 filtered_data.features = filtered_data.features.filter(
                     f => f.properties.INCIDENTNAME === incidentSelect.value
                 );
@@ -465,7 +499,13 @@ Promise.all(files.map(f => d3.json(f)))
 
         // update parallel categories plot
         function updateParallelCategoriesPlot(filtered_data) {
-            if (!filtered_data || !filtered_data.features || filtered_data.features.length === 0) return;
+            const plotDiv = document.getElementById('parallelCatsPlot');
+            if (!filtered_data || !filtered_data.features || filtered_data.features.length === 0) {
+                plotDiv.style.display = 'none';
+                Plotly.purge('parallelCatsPlot');
+                return;
+            }
+            plotDiv.style.display = '';
             const dimensions = checkedCats.length ? checkedCats : defaultCats;
             const plotData = {};
             dimensions.forEach(dim => plotData[dim] = []);
@@ -556,4 +596,29 @@ function toSentenceCase(str) {
         .trim()
         .toLowerCase()
         .replace(/^./, s => s.toUpperCase());
+}
+
+// show a temporary popup if no data points are visible
+function showNoDataPopup() {
+    let popup = document.getElementById('noDataPopup');
+    if (!popup) {
+        popup = document.createElement('div');
+        popup.id = 'noDataPopup';
+        popup.style.position = 'fixed';
+        popup.style.top = '30px';
+        popup.style.left = '50%';
+        popup.style.transform = 'translateX(-50%)';
+        popup.style.background = 'rgba(255,255,255,0.95)';
+        popup.style.border = '2px solid #d73027';
+        popup.style.color = '#d73027';
+        popup.style.padding = '18px 32px';
+        popup.style.fontSize = '1.2em';
+        popup.style.borderRadius = '8px';
+        popup.style.zIndex = 9999;
+        popup.style.boxShadow = '0 2px 12px rgba(0,0,0,0.15)';
+        popup.innerText = 'No data points visible in this view.';
+        document.body.appendChild(popup);
+    }
+    popup.style.display = 'block';
+    setTimeout(() => { popup.style.display = 'none'; }, 2200);
 }
