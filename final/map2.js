@@ -77,10 +77,16 @@ Promise.all(files.map(f => d3.json(f)))
 
         const colorFields = ['DAMAGE', 'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
             'VENTSCREEN', 'EXTERIORSIDING', 'WINDOWPANE', 'DECKPORCHONGRADE',
-            'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE', 
+            'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE',
             'DECADEBUILT'];
         const quantitativeFields = ['ASSESSEDIMPROVEDVALUE'];
         colorFields.forEach(field => {
+            const option = document.createElement('option');
+            option.value = field;
+            option.text = toSentenceCase(field);
+            colorFieldSelect.appendChild(option);
+        });
+        quantitativeFields.forEach(field => {
             const option = document.createElement('option');
             option.value = field;
             option.text = toSentenceCase(field);
@@ -91,7 +97,7 @@ Promise.all(files.map(f => d3.json(f)))
             'DAMAGE', 'CITY', 'CALFIREUNIT', 'COUNTY', 'INCIDENTNAME',
             'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
             'VENTSCREEN', 'EXTERIORSIDING', 'WINDOWPANE', 'DECKPORCHONGRADE',
-            'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE', 
+            'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE',
             'DECADEBUILT'
         ];
         const defaultCats = ['DAMAGE', 'STRUCTURETYPE', 'ROOFCONSTRUCTION'];
@@ -415,6 +421,7 @@ Promise.all(files.map(f => d3.json(f)))
 
                 colorScale = d3.scaleSequential(d3.interpolateViridis)
                     .domain([minVal, maxVal]);
+
             } else {
                 const uniqueVals = [...new Set(validFeatures.map(f => f.properties[selectedField]))];
                 colorScale = d3.scaleOrdinal()
@@ -521,7 +528,6 @@ Promise.all(files.map(f => d3.json(f)))
             // update all visualizations
             updateAllVisualizations(filtered_data);
             lastFilteredData = filtered_data;
-
             // fit map to bounds if needed
             if (filtered_data.features.length > 0) {
                 const latlngs = filtered_data.features.map(f => [
@@ -531,7 +537,7 @@ Promise.all(files.map(f => d3.json(f)))
                 const bounds = L.latLngBounds(latlngs);
                 if (
                     updateMap.cause === 'dropdown' ||
-                    (updateMap.cause === 'colorField' && sampledFeatures.length === 0)
+                    (updateMap.cause === 'colorField')
                 ) {
                     map.fitBounds(bounds, { padding: [30, 30] });
                 }
