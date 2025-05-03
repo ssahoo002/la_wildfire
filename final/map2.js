@@ -74,16 +74,6 @@ Promise.all(files.map(f => d3.json(f)))
             populateIncidentDropdown(this.value);
             triggerUpdateMapDropdown();
         });
-        let incidents = [...new Set(data.features.map(f => f.properties.INCIDENTNAME))];
-        incidents = incidents.filter(i => i !== 'Eaton' && i !== 'Palisades' && i !== 'All Incidents');
-        incidents.sort();
-        incidents = ['Eaton', 'Palisades', ...incidents];
-        incidents.forEach(incident => {
-            const option = document.createElement('option');
-            option.value = incident;
-            option.text = incident;
-            incidentSelect.appendChild(option);
-        });
 
         const colorFields = ['DAMAGE', 'STRUCTURETYPE', 'STREETTYPE', 'CALFIREUNIT', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EXTERIORSIDING', 'DECADEBUILT'];
         const quantitativeFields = ['YEARBUILT'];
