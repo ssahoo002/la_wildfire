@@ -113,12 +113,14 @@ Promise.all(files.map(f => d3.json(f)))
                 values: values,
                 textinfo: 'label+percent',
                 hoverinfo: 'label+value+percent',
-                marker: { line: { color: '#fff', width: 1 } }
+                marker: { line: { color: '#fff', width: 1 } },
+                automargin: true
             }];
             const layout = {
                 height: 320,
                 margin: { t: 20, l: 10, r: 10, b: 10 },
-                showlegend: false
+                showlegend: false,
+                // automargin: true
             };
             Plotly.react('pieChart', data, layout, { displayModeBar: false });
         }
@@ -188,7 +190,15 @@ Promise.all(files.map(f => d3.json(f)))
                 margin: { t: 20, l: 40, r: 10, b: 40 },
                 xaxis: { title: 'Date', type: 'date', tickformat: '%Y-%m-%d' },
                 yaxis: { title: 'Cumulative Count' },
-                legend: { orientation: 'h', y: -0.2 }
+                // legend: { orientation: 'h', y: -0.2 },
+                legend: {
+                    itemwidth: 100,
+                    yref: 'paper',     // changed from 'container' to 'paper'
+                    y: -0.35,          // changed from 0.001 to -0.15
+                    orientation: 'h',
+                    font: { size: 10 },
+                  }
+                // automargin: true
             };
             Plotly.react('lineChart', traces, layout, { displayModeBar: false });
         }
@@ -262,7 +272,7 @@ Promise.all(files.map(f => d3.json(f)))
                 height: 320,
                 margin: { t: 20, l: 40, r: 10, b: 80 },
                 yaxis: { title: "Cramér's V", range: [0, 1] },
-                xaxis: { tickangle: -45 },
+                xaxis: { tickangle: -45 , automargin: true},
             };
             Plotly.react('cramersVBarChart', data, layout, { displayModeBar: false });
         }
@@ -471,7 +481,10 @@ Promise.all(files.map(f => d3.json(f)))
             }];
             const layout = {
                 height: 400,
-                margin: { t: 30, l: 20, r: 20, b: 40 },
+                // margin: { t: 30, l: 20, r: 20, b: 40 },
+                yaxis: {
+                    automargin: true
+                },
                 font: { size: 12 }
             };
             Plotly.react('parallelCatsPlot', data, layout, { displayModeBar: false });

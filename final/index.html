@@ -9,6 +9,22 @@
 </head>
 
 <body>
+    <div class="dropdowns-container">
+        <div class="dropdown-container">
+            <label for="incidentSelect">Select Incident:</label>
+            <select id="incidentSelect" class="dropdown">
+                <option value="2025 Incidents">2025 Incidents</option>
+            </select>
+        </div>
+        <div class="dropdown-container">
+            <label for="colorFieldSelect">Color Points By:</label>
+            <select id="colorFieldSelect" class="dropdown"></select>
+        </div>
+        <div class="button-group">
+            <button id="pointsButton" class="active">Points</button>
+            <button id="heatmapButton">Heatmap</button>
+        </div>
+    </div>
     <div class="main-container">
         <div class="map-container">
             <div id="map"></div>
@@ -28,22 +44,6 @@
         <div>
             <div id="cramersVBarChart" style="width:400px;height:350px;"></div>
         </div>
-    </div>
-    <div class="button-group">
-        <button id="pointsButton" class="active">Points</button>
-        <button id="heatmapButton">Heatmap</button>
-    </div>
-    <div class="dropdown-container">
-        <div>
-            <label for="incidentSelect">Select Incident:</label>
-            <select id="incidentSelect" class="dropdown">
-                <option value="2025 Incidents">2025 Incidents</option>
-            </select>
-        </div>
-    </div>
-    <div class="dropdown-container" style="top: 100px;">
-        <label for="colorFieldSelect">Color Points By:</label>
-        <select id="colorFieldSelect" class="dropdown"></select>
     </div>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
