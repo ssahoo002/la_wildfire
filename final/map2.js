@@ -127,6 +127,7 @@ Promise.all(files.map(f => d3.json(f)))
 
         // --- Pie + Bar Chart ---
         function updateBarPieChart(filtered_data) {
+            console.log(filtered_data);
             if (!filtered_data || !filtered_data.features || filtered_data.features.length === 0) {
                 Plotly.purge('pieChart');
                 return;
@@ -178,8 +179,8 @@ Promise.all(files.map(f => d3.json(f)))
                 textinfo: 'label+percent',
                 hoverinfo: 'label+value+percent',
                 marker: {
-                    color: labels.map(label => label === null || label === undefined ? 'black' : isQuantitative ? colorScale(+label): colorScale(label)),
-                    line: { color: 'black', width: 1} 
+                    color: labels.map(label => label === null || label === undefined ? 'black' : isQuantitative ? colorScale(+label) : colorScale(label)),
+                    line: { color: 'black', width: 1 }
                 },
                 // marker: { line: { color: '#fff', width: 1 } },
                 automargin: true
@@ -197,13 +198,13 @@ Promise.all(files.map(f => d3.json(f)))
                 margin: { t: 20, l: 25, r: 25, b: 50 },
                 font: {
                     size: 9
-                  },
+                },
                 showlegend: false,
                 // automargin: true
             };
 
             console.log('Pie chart button active:', pieChartButton.classList.contains('active'));
-            console.log('Bar chart button active:', barChartButton.classList.contains('active'));   
+            console.log('Bar chart button active:', barChartButton.classList.contains('active'));
             if (pieChartButton.classList.contains('active')) {
                 Plotly.react('pieChart', dataPie, layout, { displayModeBar: false });
             } else if (barChartButton.classList.contains('active')) {
@@ -359,6 +360,7 @@ Promise.all(files.map(f => d3.json(f)))
 
         // --- Update all visualizations on map/filter changes ---
         function updateAllVisualizations(filtered_data) {
+            window.currentFilteredData = filtered_data;
             updateParallelCategoriesPlot(filtered_data);
             updateBarPieChart(filtered_data);
             updateLineChart(filtered_data);
@@ -629,7 +631,7 @@ Promise.all(files.map(f => d3.json(f)))
             map.removeControl(legend);
         });
         // DELETE THIS LATER
-        let filtered_data = {
+        /*let filtered_data = {
             ...data,
             features: data.features
         };
@@ -641,21 +643,21 @@ Promise.all(files.map(f => d3.json(f)))
             filtered_data.features = filtered_data.features.filter(
                 f => f.properties.INCIDENTNAME === incidentSelect.value
             );
-        }
+        }*/
 
         // pie/bar chart button listeners
         pieChartButton.addEventListener('click', function () {
             pieChartButton.classList.add('active');
             barChartButton.classList.remove('active');
-            updateBarPieChart(filtered_data);
+            updateBarPieChart(window.currentFilteredData);
         });
-        
+
         barChartButton.addEventListener('click', function () {
             barChartButton.classList.add('active');
             pieChartButton.classList.remove('active');
-            updateBarPieChart(filtered_data);
+            updateBarPieChart(window.currentFilteredData);
         });
-        
+
 
         // initial map update
         updateMap();
@@ -695,3 +697,6 @@ function showNoDataPopup() {
     popup.style.display = 'block';
     setTimeout(() => { popup.style.display = 'none'; }, 2200);
 }
+
+// global variable for current filtered data
+window.currentFilteredData = null;
