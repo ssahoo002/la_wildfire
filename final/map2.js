@@ -19,6 +19,8 @@ const heatmapButton = document.getElementById('heatmapButton');
 const yearSelect = document.getElementById('yearSelect');
 const incidentSelect = document.getElementById('incidentSelect');
 const colorFieldSelect = document.getElementById('colorFieldSelect');
+const pieChartButton = document.getElementById('pieChartButton');
+const barChartButton = document.getElementById('barChartButton');
 
 const files = [
     'data_split/1.geojso',
@@ -133,14 +135,36 @@ Promise.all(files.map(f => d3.json(f)))
         });
         let lastFilteredData = null;
 
-        // --- Pie Chart ---
-        function updatePieChart(filtered_data) {
+        // --- Pie + Bar Chart ---
+        function updateBarPieChart(filtered_data) {
             if (!filtered_data || !filtered_data.features || filtered_data.features.length === 0) {
                 Plotly.purge('pieChart');
                 return;
             }
             const selectedField = colorFieldSelect.value;
             const counts = {};
+            const isQuantitative = quantitativeFields.includes(selectedField);
+            var validFeatures = filtered_data.features.filter(f => f.properties[selectedField] !== null && f.properties[selectedField] !== undefined);
+
+
+            let colorScale;
+            if (isQuantitative) {
+                const numericValues = validFeatures
+                    .map(f => +f.properties[selectedField])
+                    .filter(v => !isNaN(v));
+
+                const minVal = d3.min(numericValues);
+                const maxVal = d3.max(numericValues);
+
+                colorScale = d3.scaleSequential(d3.interpolateViridis)
+                    .domain([minVal, maxVal]);
+            } else {
+                const uniqueVals = [...new Set(validFeatures.map(f => f.properties[selectedField]))];
+                colorScale = d3.scaleOrdinal()
+                    .domain(uniqueVals)
+                    .range(d3.schemeSet3.concat(d3.schemePastel1).slice(0, uniqueVals.length));
+            }
+
             filtered_data.features.forEach(f => {
                 let val = f.properties[selectedField];
                 if (val === null || val === undefined) val = 'No Data';
@@ -148,7 +172,7 @@ Promise.all(files.map(f => d3.json(f)))
             });
             const labels = Object.keys(counts);
             const values = labels.map(l => counts[l]);
-            const data = [{
+            const dataPie = [{
                 type: 'pie',
                 labels: labels,
                 values: values,
@@ -157,13 +181,44 @@ Promise.all(files.map(f => d3.json(f)))
                 marker: { line: { color: '#fff', width: 1 } },
                 automargin: true
             }];
+            const dataBar = [{
+                type: 'bar',
+                x: labels,
+                y: values,
+                textinfo: 'label+percent',
+                hoverinfo: 'label+value+percent',
+                marker: {
+                    color: labels.map(label => label === null || label === undefined ? 'black' : isQuantitative ? colorScale(+label): colorScale(label)),
+                    line: { color: 'black', width: 1} 
+                },
+                // marker: { line: { color: '#fff', width: 1 } },
+                automargin: true
+            }]
+
             const layout = {
                 height: 320,
                 margin: { t: 20, l: 10, r: 10, b: 10 },
                 showlegend: false,
                 // automargin: true
             };
-            Plotly.react('pieChart', data, layout, { displayModeBar: false });
+
+            const layout2 = {
+                height: 320,
+                margin: { t: 20, l: 25, r: 25, b: 50 },
+                font: {
+                    size: 9
+                  },
+                showlegend: false,
+                // automargin: true
+            };
+
+            console.log('Pie chart button active:', pieChartButton.classList.contains('active'));
+            console.log('Bar chart button active:', barChartButton.classList.contains('active'));   
+            if (pieChartButton.classList.contains('active')) {
+                Plotly.react('pieChart', dataPie, layout, { displayModeBar: false });
+            } else if (barChartButton.classList.contains('active')) {
+                Plotly.react('pieChart', dataBar, layout2, { displayModeBar: false });
+            }
         }
 
         // --- Cumulative Line Chart ---
@@ -315,7 +370,7 @@ Promise.all(files.map(f => d3.json(f)))
         // --- Update all visualizations on map/filter changes ---
         function updateAllVisualizations(filtered_data) {
             updateParallelCategoriesPlot(filtered_data);
-            updatePieChart(filtered_data);
+            updateBarPieChart(filtered_data);
             updateLineChart(filtered_data);
             updateCramersVBarChart(filtered_data);
             // show popup if no data
@@ -583,6 +638,34 @@ Promise.all(files.map(f => d3.json(f)))
             if (heatmapLayer) map.addLayer(heatmapLayer);
             map.removeControl(legend);
         });
+        // DELETE THIS LATER
+        let filtered_data = {
+            ...data,
+            features: data.features
+        };
+
+        // filter data by incident
+        if (incidentSelect.value === '2025 Incidents') {
+            filtered_data.features = filtered_data.features.filter(f => f.properties.INCIDENTSTARTYEAR === 2025);
+        } else {
+            filtered_data.features = filtered_data.features.filter(
+                f => f.properties.INCIDENTNAME === incidentSelect.value
+            );
+        }
+
+        // pie/bar chart button listeners
+        pieChartButton.addEventListener('click', function () {
+            pieChartButton.classList.add('active');
+            barChartButton.classList.remove('active');
+            updateBarPieChart(filtered_data);
+        });
+        
+        barChartButton.addEventListener('click', function () {
+            barChartButton.classList.add('active');
+            pieChartButton.classList.remove('active');
+            updateBarPieChart(filtered_data);
+        });
+        
 
         // initial map update
         updateMap();
