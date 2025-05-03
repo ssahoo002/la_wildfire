@@ -48,4 +48,4 @@ def save_geojson(output_dir, part, current_features):
     print(f"Written {output_file} with {len(current_features)} features.")
 
 # Example usage
-split_geojson("structure_data_filtered.geojson", "final/data_split", 26214400)  # Max size in bytes
+split_geojson("data/structure_data_filtered_new.geojson", "final/data_split", 26214400)  # Max size in bytes
