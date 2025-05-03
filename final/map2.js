@@ -75,8 +75,11 @@ Promise.all(files.map(f => d3.json(f)))
             triggerUpdateMapDropdown();
         });
 
-        const colorFields = ['DAMAGE', 'STRUCTURETYPE', 'STREETTYPE', 'CALFIREUNIT', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EXTERIORSIDING', 'DECADEBUILT'];
-        const quantitativeFields = ['YEARBUILT'];
+        const colorFields = ['DAMAGE', 'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
+            'VENTSCREEN', 'EXTERIORSIDING', 'WINDOWPANE', 'DECKPORCHONGRADE',
+            'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE', 
+            'DECADEBUILT'];
+        const quantitativeFields = ['ASSESSEDIMPROVEDVALUE'];
         colorFields.forEach(field => {
             const option = document.createElement('option');
             option.value = field;
@@ -88,7 +91,7 @@ Promise.all(files.map(f => d3.json(f)))
             'DAMAGE', 'CITY', 'CALFIREUNIT', 'COUNTY', 'INCIDENTNAME',
             'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
             'VENTSCREEN', 'EXTERIORSIDING', 'WINDOWPANE', 'DECKPORCHONGRADE',
-            'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE', 'FIRENAME',
+            'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE', 
             'DECADEBUILT'
         ];
         const defaultCats = ['DAMAGE', 'STRUCTURETYPE', 'ROOFCONSTRUCTION'];
@@ -127,7 +130,6 @@ Promise.all(files.map(f => d3.json(f)))
 
         // --- Pie + Bar Chart ---
         function updateBarPieChart(filtered_data) {
-            console.log(filtered_data);
             if (!filtered_data || !filtered_data.features || filtered_data.features.length === 0) {
                 Plotly.purge('pieChart');
                 return;
@@ -202,9 +204,6 @@ Promise.all(files.map(f => d3.json(f)))
                 showlegend: false,
                 // automargin: true
             };
-
-            console.log('Pie chart button active:', pieChartButton.classList.contains('active'));
-            console.log('Bar chart button active:', barChartButton.classList.contains('active'));
             if (pieChartButton.classList.contains('active')) {
                 Plotly.react('pieChart', dataPie, layout, { displayModeBar: false });
             } else if (barChartButton.classList.contains('active')) {
@@ -275,7 +274,7 @@ Promise.all(files.map(f => d3.json(f)))
             const layout = {
                 height: 320,
                 margin: { t: 20, l: 60, r: 10, b: 60 },
-                xaxis: { title: { text: 'Date', standoff: 20 }, type: 'date', tickformat: '%Y-%m-%d %H:%M', automargin: true },
+                xaxis: { title: { text: 'Date', standoff: 20 }, type: 'date', tickformat: '%m-%d\n%I:%M %p', automargin: true },
                 yaxis: { title: { text: 'Cumulative Count', standoff: 20 }, automargin: true },
                 showlegend: false
             };
