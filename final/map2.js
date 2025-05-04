@@ -937,7 +937,7 @@ Promise.all(files.map(f => d3.json(f)))
         for (let item of document.getElementsByClassName("js-plotly-plot")) {
             if (item.style.width.substring(0, 1) !== '1')
                 item.style.width = parseInt(item.style.width.substring(0, 3)) +
-                    16 + item.style.width.substring(3);
+                    20 + item.style.width.substring(3);
         };
     })
     .catch(error => console.error('Error loading GeoJSON:', error));

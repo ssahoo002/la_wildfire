@@ -1,10 +1,11 @@
 /* main container for layout */
 .main-container {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     gap: 20px;
     width: 100%;
     margin: 20px auto;
+    align-items: flex-start;
 }
 
 /* point count display */
@@ -226,8 +227,9 @@
 
 /* visualizations container */
 #visualizations {
-    justify-content: flex-start;
     align-items: flex-start;
+    display: flex;
+    justify-content: center;
 }
 
 /* pie and line chart style */
