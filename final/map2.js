@@ -490,11 +490,12 @@ Promise.all(files.map(f => d3.json(f)))
             updateLineChart(filtered_data);
             updateCramersVBarChart(filtered_data);
             // show popup if no data
-            if (!filtered_data || !filtered_data.features || filtered_data.features.length === 0) {
+            const checkboxDiv = document.getElementById('parallelCatsCheckboxes');
+            if (!filtered_data || !filtered_data.features || filtered_data.features.length === 0 || visibleCount === 0) {
                 showNoDataPopup();
-                document.getElementById('parallelCatsCheckboxes').hidden = true;
+                checkboxDiv.style.display = 'none';
             } else {
-                document.getElementById('parallelCatsCheckboxes').hidden = false;
+                checkboxDiv.style.display = '';
             }
         }
 
