@@ -121,9 +121,47 @@ Promise.all(files.map(f => d3.json(f)))
         populateIncidentDropdown(yearSelect.value);
         // update incident dropdown on year change
         yearSelect.addEventListener('change', function () {
+            // update incident dropdown for new year
             populateIncidentDropdown(this.value);
-            triggerUpdateMapDropdown();
+            // set incident dropdown to 'All Incidents'
+            incidentSelect.value = 'All Incidents';
+            // call a single map update that uses the new year and resets the view
+            updateMapForYearChange(this.value);
         });
+
+        // new function: update map for year change
+        function updateMapForYearChange(newYear) {
+            // filter data for new year
+            let filtered_data = {
+                ...data,
+                features: data.features.filter(f => f.properties.INCIDENTSTARTYEAR == newYear)
+            };
+            // set incident dropdown to 'All Incidents' (already done above)
+            // update all visualizations and reset map view
+            updateAllVisualizations(filtered_data);
+            lastFilteredData = filtered_data;
+            if (filtered_data.features.length > 0) {
+                const latlngs = filtered_data.features.map(f => [
+                    +f.properties.Latitude,
+                    +f.properties.Longitude
+                ]);
+                const bounds = L.latLngBounds(latlngs);
+                map.fitBounds(bounds, { padding: [30, 30] });
+            }
+            // update map layers for new year
+            if (pointsLayer && map.hasLayer(pointsLayer)) {
+                map.removeLayer(pointsLayer);
+                pointsLayer = null;
+            }
+            if (heatmapLayer && map.hasLayer(heatmapLayer)) {
+                map.removeLayer(heatmapLayer);
+                heatmapLayer = null;
+            }
+            // call updateMap to refresh layers and legend
+            updateMap.cause = 'dropdown';
+            updateMap();
+            updateMap.cause = undefined;
+        }
 
         const cleanedLabels = {
             DAMAGE: 'Damage',
@@ -145,7 +183,7 @@ Promise.all(files.map(f => d3.json(f)))
             ASSESSEDIMPROVEDVALUE: 'Assessed Improved Value',
         };
 
-        const colorFields = ['DAMAGE', 'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
+        const colorFields = ['DAMAGE', 'CALFIREUNIT', 'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
             'VENTSCREEN', 'EXTERIORSIDING', 'WINDOWPANE', 'DECKPORCHONGRADE',
             'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE',
             'DECADEBUILT'];
@@ -498,12 +536,12 @@ Promise.all(files.map(f => d3.json(f)))
                 x: labels,
                 y: values,
                 type: 'bar',
-                marker: { color: '#4a90e2',line: { color: 'black', width: 1 } }
+                marker: { color: '#4a90e2', line: { color: 'black', width: 1 } }
             }];
             const layout = {
                 height: 320,
                 margin: { t: 20, l: 40, r: 10, b: 100 },
-                yaxis: { title: { text: 'Correlation (Cramér\'s V)', font: { size: 11 }}, range: [0, 1], gridcolor: gridColor, fixedrange: true },
+                yaxis: { title: { text: 'Correlation (Cramér\'s V)', font: { size: 11 } }, range: [0, 1], gridcolor: gridColor, fixedrange: true },
                 xaxis: { tickangle: -45, gridcolor: gridColor, fixedrange: true }
             };
             Plotly.react('cramersVBarChart', data, Object.assign({}, layout, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
@@ -532,7 +570,8 @@ Promise.all(files.map(f => d3.json(f)))
             updateCramersVBarChart(filtered_data);
             // show popup if no data
             const checkboxDiv = document.getElementById('parallelCatsCheckboxes');
-            if (!filtered_data || !filtered_data.features || filtered_data.features.length === 0 || visibleCount === 0) {
+            console.log(visibleCount)
+            if (visibleCount === 0) {
                 showNoDataPopup();
                 checkboxDiv.style.display = 'none';
             } else {
@@ -894,11 +933,10 @@ Promise.all(files.map(f => d3.json(f)))
 
         // initial map update
         updateMap();
-        for (let item of document.getElementsByClassName("js-plotly-plot")) 
-        { 
-            if (item.style.width.substring(0, 1) !== '1') 
-                item.style.width = parseInt(item.style.width.substring(0, 3)) + 
-                    16 + item.style.width.substring(3) ;
+        for (let item of document.getElementsByClassName("js-plotly-plot")) {
+            if (item.style.width.substring(0, 1) !== '1')
+                item.style.width = parseInt(item.style.width.substring(0, 3)) +
+                    16 + item.style.width.substring(3);
         };
     })
     .catch(error => console.error('Error loading GeoJSON:', error));
