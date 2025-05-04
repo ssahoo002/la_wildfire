@@ -298,7 +298,7 @@ Promise.all(files.map(f => d3.json(f)))
                 };
                 const layout2 = {
                     height: 320,
-                    margin: { t: 20, l: 25, r: 25, b: 140 }, // further increased bottom margin
+                    margin: { t: 20, l: 25, r: 25, b: 90 }, // further increased bottom margin
                     font: { size: 9 },
                     showlegend: false,
                     xaxis: { gridcolor: gridColor, fixedrange: true, tickangle: -45, automargin: true },
@@ -350,7 +350,7 @@ Promise.all(files.map(f => d3.json(f)))
                 };
                 const layout2 = {
                     height: 320,
-                    margin: { t: 20, l: 25, r: 25, b: 140 }, // further increased bottom margin
+                    margin: { t: 20, l: 25, r: 25, b: 90 }, // further increased bottom margin
                     font: { size: 9 },
                     showlegend: false,
                     xaxis: { gridcolor: gridColor, fixedrange: true, tickangle: -45, automargin: true },
@@ -412,7 +412,7 @@ Promise.all(files.map(f => d3.json(f)))
             const gridColor = getGridColor();
             const layout = {
                 height: 320,
-                margin: { t: 20, l: 60, r: 10, b: 60 },
+                margin: { t: 20, l: 60, r: 10, b: 40 },
                 xaxis: { title: { text: 'Date', standoff: 20 }, type: 'date', tickformat: '%m-%d\n%I:%M %p', automargin: true, gridcolor: gridColor, fixedrange: true },
                 yaxis: { title: { text: 'Cumulative Count', standoff: 20 }, automargin: true, gridcolor: gridColor, fixedrange: true, rangemode: 'tozero', range: [0, null] },
                 showlegend: false
@@ -490,10 +490,9 @@ Promise.all(files.map(f => d3.json(f)))
             }];
             const layout = {
                 height: 320,
-                margin: { t: 50, l: 40, r: 10, b: 80 },
-                yaxis: { title: "Cramér's V", range: [0, 1], gridcolor: gridColor, fixedrange: true },
-                xaxis: { tickangle: -45, gridcolor: gridColor, fixedrange: true },
-                title: { text: 'Correlation between damage and...', font: { size: 18 }, xref: 'container', x: 0.5 }
+                margin: { t: 20, l: 40, r: 10, b: 100 },
+                yaxis: { title: { text: 'Correlation (Cramér\'s V)', font: { size: 11 }}, range: [0, 1], gridcolor: gridColor, fixedrange: true },
+                xaxis: { tickangle: -45, gridcolor: gridColor, fixedrange: true }
             };
             Plotly.react('cramersVBarChart', data, Object.assign({}, layout, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
         }
@@ -770,7 +769,7 @@ Promise.all(files.map(f => d3.json(f)))
                     color: '#4a90e2',
                     shape: 'hspline'
                 },
-                arrangement: 'fixed' // prevent axis reordering
+                //arrangement: 'fixed' // prevent axis reordering
             }];
             const layout = {
                 height: 400,
