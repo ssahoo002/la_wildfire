@@ -236,7 +236,7 @@ Promise.all(files.map(f => d3.json(f)))
         // update pie and bar chart
         function updateBarPieChart(filtered_data) {
             if (!filtered_data || !filtered_data.features || filtered_data.features.length === 0) {
-                Plotly.purge('pieChart');
+                Plotly.purge('barPieChart');
                 return;
             }
             const selectedField = colorFieldSelect.value;
@@ -256,7 +256,7 @@ Promise.all(files.map(f => d3.json(f)))
                     })
                     .filter(v => !isNaN(v));
                 if (numericValues.length === 0) {
-                    Plotly.purge('pieChart');
+                    Plotly.purge('barPieChart');
                     return;
                 }
                 const minVal = d3.min(numericValues);
@@ -298,16 +298,16 @@ Promise.all(files.map(f => d3.json(f)))
                 };
                 const layout2 = {
                     height: 320,
-                    margin: { t: 20, l: 25, r: 25, b: 50 },
+                    margin: { t: 20, l: 25, r: 25, b: 140 }, // further increased bottom margin
                     font: { size: 9 },
                     showlegend: false,
-                    xaxis: { gridcolor: gridColor, fixedrange: true },
+                    xaxis: { gridcolor: gridColor, fixedrange: true, tickangle: -45, automargin: true },
                     yaxis: { gridcolor: gridColor, fixedrange: true }
                 };
                 if (pieChartButton.classList.contains('active')) {
-                    Plotly.react('pieChart', dataPie, Object.assign({}, layout, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
+                    Plotly.react('barPieChart', dataPie, Object.assign({}, layout, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
                 } else if (barChartButton.classList.contains('active')) {
-                    Plotly.react('pieChart', dataBar, Object.assign({}, layout2, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
+                    Plotly.react('barPieChart', dataBar, Object.assign({}, layout2, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
                 }
             } else {
                 // categorical field for chart
@@ -350,16 +350,16 @@ Promise.all(files.map(f => d3.json(f)))
                 };
                 const layout2 = {
                     height: 320,
-                    margin: { t: 20, l: 25, r: 25, b: 50 },
+                    margin: { t: 20, l: 25, r: 25, b: 140 }, // further increased bottom margin
                     font: { size: 9 },
                     showlegend: false,
-                    xaxis: { gridcolor: gridColor, fixedrange: true },
+                    xaxis: { gridcolor: gridColor, fixedrange: true, tickangle: -45, automargin: true },
                     yaxis: { gridcolor: gridColor, fixedrange: true }
                 };
                 if (pieChartButton.classList.contains('active')) {
-                    Plotly.react('pieChart', dataPie, Object.assign({}, layout, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
+                    Plotly.react('barPieChart', dataPie, Object.assign({}, layout, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
                 } else if (barChartButton.classList.contains('active')) {
-                    Plotly.react('pieChart', dataBar, Object.assign({}, layout2, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
+                    Plotly.react('barPieChart', dataBar, Object.assign({}, layout2, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
                 }
             }
         }
@@ -486,7 +486,7 @@ Promise.all(files.map(f => d3.json(f)))
                 x: labels,
                 y: values,
                 type: 'bar',
-                marker: { color: '#4a90e2' }
+                marker: { color: '#4a90e2',line: { color: 'black', width: 1 } }
             }];
             const layout = {
                 height: 320,
@@ -649,7 +649,7 @@ Promise.all(files.map(f => d3.json(f)))
                         fillOpacity: 0.8
                     };
 
-                    var str = `<strong>${feature.properties.INCIDENTNAME}</strong><br>${selectedField}: ${value ?? 'null'}`;
+                    var str = `<strong>${feature.properties.INCIDENTNAME}</strong><br>${cleanedLabels[selectedField]}: ${value ?? 'null'}`;
 
 
                     if (selectedField !== 'DAMAGE')
@@ -767,7 +767,7 @@ Promise.all(files.map(f => d3.json(f)))
                 type: 'parcats',
                 dimensions: plotlyDimensions,
                 line: {
-                    color: 'blue',
+                    color: '#4a90e2',
                     shape: 'hspline'
                 },
                 arrangement: 'fixed' // prevent axis reordering
@@ -883,6 +883,12 @@ Promise.all(files.map(f => d3.json(f)))
 
         // initial map update
         updateMap();
+        for (let item of document.getElementsByClassName("js-plotly-plot")) 
+        { 
+            if (item.style.width.substring(0, 1) !== '1') 
+                item.style.width = parseInt(item.style.width.substring(0, 3)) + 
+                    16 + item.style.width.substring(3) ;
+        };
     })
     .catch(error => console.error('Error loading GeoJSON:', error));
 

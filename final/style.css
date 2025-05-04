@@ -25,8 +25,38 @@
 /* plot container for charts */
 .plot-container {
     width: 100%;
-    min-width: 400px;
-    min-height: 400px;
+}
+
+/* ensure plotly charts fit container without overflow or scrollbars */
+.plot-container {
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: visible !important;
+    padding: 0;
+}
+
+/* ensure plotly charts fit container without overflow or scrollbars */
+.js-plotly-plot {
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: visible !important;
+    padding: 0;
+}
+
+.plot-container .plotly,
+.js-plotly-plot .plotly {
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: visible !important;
+}
+
+/* remove scrollbars from plotly containers */
+.plot-container::-webkit-scrollbar,
+.js-plotly-plot::-webkit-scrollbar {
+    display: none;
 }
 
 /* main content container */
@@ -187,13 +217,6 @@
     visibility: hidden;
 }
 
-/* left chart container */
-.leftChartContainer {
-    position: relative;
-    width: 350px;
-    height: 350px;
-}
-
 /* secondary button group */
 .button-group2 button {
     padding: 8px 50px 16px 50px;
@@ -217,7 +240,7 @@
 }
 
 /* pie and line chart style */
-#pieChart,
+#barPieChart,
 #lineChart {
     background: #fff;
     border: 1px solid #ddd;
@@ -292,8 +315,7 @@
     }
 
     /* dark mode chart containers */
-    .leftChartContainer,
-    #pieChart,
+    #barPieChart,
     #lineChart,
     #cramersVBarChart {
         background: #23272a;
@@ -410,14 +432,14 @@
     /* dark mode chart grid lines */
     .plot-container .chart-grid line,
     .plot-container .tick line,
-    #pieChart .chart-grid line,
+    #barPieChart .chart-grid line,
     #lineChart .chart-grid line,
     #cramersVBarChart .chart-grid line {
         stroke: #444 !important;
     }
 
     .plot-container .domain,
-    #pieChart .domain,
+    #barPieChart .domain,
     #lineChart .domain,
     #cramersVBarChart .domain {
         stroke: #444 !important;

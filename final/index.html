@@ -39,20 +39,19 @@
             <div class="checkbox-container" id="parallelCatsCheckboxes" style="margin-top:10px; width:100%;"></div>
         </div>
     </div>
-    <div id="visualizations" style="display: flex; gap: 30px; margin-top: 30px;">
-        <div class="leftChartContainer" style="position: relative;">
-            <div id="pieChart" style="width:350px;height:350px;"></div>
+    <div id="visualizations" style="display: flex; gap: 16px; margin-top: 30px;">
+        <div id="barPieChartHolder" class="plot-holder">
+            <div id="barPieChart" style="width:350px;height:350px;"></div>
             <div class="button-group2">
                 <button id="pieChartButton">Pie Chart</button>
                 <button id="barChartButton" class="active">Bar Chart</button>
             </div>
-
         </div>
-        <div>
-            <div id="lineChart" style="width:500px;height:350px;"></div>
+        <div id="lineChartHolder" class="plot-holder">
+            <div id="lineChart" style="width:480px;height:350px;"></div>
         </div>
-        <div>
-            <div id="cramersVBarChart" style="width:400px;height:350px;"></div>
+        <div id="cramersVBarChartHolder" class="plot-holder">
+            <div id="cramersVBarChart" style="width:380px;height:350px;"></div>
         </div>
     </div>
 
