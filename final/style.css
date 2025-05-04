@@ -185,3 +185,21 @@
   padding: 8px;
   box-shadow: 0 2px 6px #0001;
 }
+
+.checkbox-container {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
