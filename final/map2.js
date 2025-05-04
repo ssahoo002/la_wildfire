@@ -60,6 +60,18 @@ const colorFieldSelect = document.getElementById('colorFieldSelect');
 const pieChartButton = document.getElementById('pieChartButton');
 const barChartButton = document.getElementById('barChartButton');
 
+const openPopup = document.getElementById('openPopup');
+const closePopup = document.getElementById('closePopup');
+const popup = document.getElementById('popup');
+
+openPopup.addEventListener('click', function () {
+    popup.classList.add('open');
+});
+
+closePopup.addEventListener('click', function () {
+    popup.classList.remove('open');
+});
+
 const files = [
     'data_split/1.geojso',
     'data_split/2.geojso',
