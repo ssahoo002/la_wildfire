@@ -185,7 +185,7 @@ Promise.all(files.map(f => d3.json(f)))
 
         const colorFields = ['DAMAGE', 'CALFIREUNIT', 'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
             'VENTSCREEN', 'EXTERIORSIDING', 'WINDOWPANE', 'DECKPORCHONGRADE',
-            'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE',
+            'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE', 'CALFIREUNIT',
             'DECADEBUILT'];
         const quantitativeFields = ['ASSESSEDIMPROVEDVALUE'];
         colorFields.forEach(field => {
@@ -572,6 +572,10 @@ Promise.all(files.map(f => d3.json(f)))
             const checkboxDiv = document.getElementById('parallelCatsCheckboxes');
             console.log(visibleCount)
             if (visibleCount === 0) {
+                console.log(filtered_data);
+                console.log(filtered_data.features);
+                console.log(filtered_data.features.length);
+                console.log(visibleCount);
                 showNoDataPopup();
                 checkboxDiv.style.display = 'none';
             } else {
