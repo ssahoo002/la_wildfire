@@ -1,13 +1,49 @@
 // init map
 const map = L.map('map').setView([34.0522, -118.2437], 10);
 
-// add tile layer
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-}).addTo(map);
+// Helper to detect dark mode
+function isDarkMode() {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+// Helper to get appropriate Leaflet tile layer
+function getTileLayer() {
+    if (isDarkMode()) {
+        // CartoDB Dark Matter
+        return L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
+        });
+    } else {
+        // OpenStreetMap default
+        return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        });
+    }
+}
+
+// Remove old tile layers and add the correct one
+function setMapTileLayer() {
+    map.eachLayer(function (layer) {
+        if (layer instanceof L.TileLayer) {
+            map.removeLayer(layer);
+        }
+    });
+    getTileLayer().addTo(map);
+}
+
+// Initial map setup
+setMapTileLayer();
+// Listen for dark mode changes
+if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setMapTileLayer);
+}
 
 // legend control
 const legend = L.control({ position: 'topright' });
+
+const quantBoundary = 3000000;
 
 // layer variables
 let pointsLayer;
@@ -145,75 +181,114 @@ Promise.all(files.map(f => d3.json(f)))
             const isQuantitative = quantitativeFields.includes(selectedField);
             var validFeatures = filtered_data.features.filter(f => f.properties[selectedField] !== null && f.properties[selectedField] !== undefined);
 
-
             let colorScale;
             if (isQuantitative) {
+                // Cap values at 5,000,000 before any other preprocessing
                 const numericValues = validFeatures
-                    .map(f => +f.properties[selectedField])
+                    .map(f => {
+                        let v = +f.properties[selectedField];
+                        if (!isNaN(v) && v > quantBoundary) v = quantBoundary;
+                        return v;
+                    })
                     .filter(v => !isNaN(v));
-
+                if (numericValues.length === 0) {
+                    Plotly.purge('pieChart');
+                    return;
+                }
                 const minVal = d3.min(numericValues);
                 const maxVal = d3.max(numericValues);
-
-                colorScale = d3.scaleSequential(d3.interpolateViridis)
-                    .domain([minVal, maxVal]);
+                // Create 8 bins
+                const binGenerator = d3.bin().domain([minVal, maxVal]).thresholds(10);
+                const bins = binGenerator(numericValues);
+                // Labels as bin ranges
+                const binLabels = bins.map(bin => `${bin.x0.toFixed(0)} - ${bin.x1.toFixed(0)}`);
+                const binCounts = bins.map(bin => bin.length);
+                colorScale = d3.scaleSequential(d3.interpolateViridis).domain([minVal, maxVal]);
+                // Pie chart data (binned)
+                const dataPie = [{
+                    type: 'pie',
+                    labels: binLabels,
+                    values: binCounts,
+                    textinfo: 'label+percent',
+                    hoverinfo: 'label+value+percent',
+                    marker: { line: { color: '#fff', width: 1 } },
+                    automargin: true
+                }];
+                // Histogram (bar chart)
+                const dataBar = [{
+                    type: 'bar',
+                    x: binLabels,
+                    y: binCounts,
+                    marker: {
+                        color: bins.map(bin => colorScale((bin.x0 + bin.x1) / 2)),
+                        line: { color: 'black', width: 1 }
+                    },
+                    automargin: true
+                }];
+                const layout = {
+                    height: 320,
+                    margin: { t: 20, l: 10, r: 10, b: 10 },
+                    showlegend: false
+                };
+                const layout2 = {
+                    height: 320,
+                    margin: { t: 20, l: 25, r: 25, b: 50 },
+                    font: { size: 9 },
+                    showlegend: false
+                };
+                if (pieChartButton.classList.contains('active')) {
+                    Plotly.react('pieChart', dataPie, Object.assign({}, layout, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
+                } else if (barChartButton.classList.contains('active')) {
+                    Plotly.react('pieChart', dataBar, Object.assign({}, layout2, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
+                }
             } else {
+                // ...existing code for categorical...
                 const uniqueVals = [...new Set(validFeatures.map(f => f.properties[selectedField]))];
                 colorScale = d3.scaleOrdinal()
                     .domain(uniqueVals)
                     .range(d3.schemeSet3.concat(d3.schemePastel1).slice(0, uniqueVals.length));
-            }
-
-            filtered_data.features.forEach(f => {
-                let val = f.properties[selectedField];
-                if (val === null || val === undefined) val = 'No Data';
-                counts[val] = (counts[val] || 0) + 1;
-            });
-            const labels = Object.keys(counts);
-            const values = labels.map(l => counts[l]);
-            const dataPie = [{
-                type: 'pie',
-                labels: labels,
-                values: values,
-                textinfo: 'label+percent',
-                hoverinfo: 'label+value+percent',
-                marker: { line: { color: '#fff', width: 1 } },
-                automargin: true
-            }];
-            const dataBar = [{
-                type: 'bar',
-                x: labels,
-                y: values,
-                textinfo: 'label+percent',
-                hoverinfo: 'label+value+percent',
-                marker: {
-                    color: labels.map(label => label === null || label === undefined ? 'black' : isQuantitative ? colorScale(+label) : colorScale(label)),
-                    line: { color: 'black', width: 1 }
-                },
-                // marker: { line: { color: '#fff', width: 1 } },
-                automargin: true
-            }]
-
-            const layout = {
-                height: 320,
-                margin: { t: 20, l: 10, r: 10, b: 10 },
-                showlegend: false,
-                // automargin: true
-            };
-
-            const layout2 = {
-                height: 320,
-                margin: { t: 20, l: 25, r: 25, b: 50 },
-                font: {
-                    size: 9
-                },
-                showlegend: false,
-                // automargin: true
-            };
-            if (pieChartButton.classList.contains('active')) {
-                Plotly.react('pieChart', dataPie, layout, { displayModeBar: false });
-            } else if (barChartButton.classList.contains('active')) {
-                Plotly.react('pieChart', dataBar, layout2, { displayModeBar: false });
+                filtered_data.features.forEach(f => {
+                    let val = f.properties[selectedField];
+                    if (val === null || val === undefined) val = 'No Data';
+                    counts[val] = (counts[val] || 0) + 1;
+                });
+                const labels = Object.keys(counts);
+                const values = labels.map(l => counts[l]);
+                const dataPie = [{
+                    type: 'pie',
+                    labels: labels,
+                    values: values,
+                    textinfo: 'label+percent',
+                    hoverinfo: 'label+value+percent',
+                    marker: { line: { color: '#fff', width: 1 } },
+                    automargin: true
+                }];
+                const dataBar = [{
+                    type: 'bar',
+                    x: labels,
+                    y: values,
+                    marker: {
+                        color: labels.map(label => label === null || label === undefined ? 'black' : colorScale(label)),
+                        line: { color: 'black', width: 1 }
+                    },
+                    automargin: true
+                }];
+                const layout = {
+                    height: 320,
+                    margin: { t: 20, l: 10, r: 10, b: 10 },
+                    showlegend: false
+                };
+                const layout2 = {
+                    height: 320,
+                    margin: { t: 20, l: 25, r: 25, b: 50 },
+                    font: { size: 9 },
+                    showlegend: false
+                };
+                if (pieChartButton.classList.contains('active')) {
+                    Plotly.react('pieChart', dataPie, Object.assign({}, layout, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
+                } else if (barChartButton.classList.contains('active')) {
+                    Plotly.react('pieChart', dataBar, Object.assign({}, layout2, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
+                }
             }
         }
 
@@ -284,7 +359,7 @@ Promise.all(files.map(f => d3.json(f)))
                 yaxis: { title: { text: 'Cumulative Count', standoff: 20 }, automargin: true },
                 showlegend: false
             };
-            Plotly.react('lineChart', traces, layout, { displayModeBar: false });
+            Plotly.react('lineChart', traces, Object.assign({}, layout, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
         }
 
         // --- Cramér's V Bar Chart ---
@@ -360,13 +435,26 @@ Promise.all(files.map(f => d3.json(f)))
                 xaxis: { tickangle: -45, automargin: true },
                 title: { text: 'Correlation between damage and...', font: { size: 18 }, xref: 'container', x: 0.5 }
             };
-            Plotly.react('cramersVBarChart', data, layout, { displayModeBar: false });
+            Plotly.react('cramersVBarChart', data, Object.assign({}, layout, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
         }
 
         // --- Update all visualizations on map/filter changes ---
         function updateAllVisualizations(filtered_data) {
             window.currentFilteredData = filtered_data;
-            document.getElementById('incidentCount').innerText = `Incident(s) Shown: ${filtered_data.features.length}`;
+            // Calculate visible points in current map bounds
+            let visibleCount = 0;
+            if (pointsLayer && map) {
+                const bounds = map.getBounds();
+                const features = pointsLayer.toGeoJSON().features;
+                visibleCount = features.filter(f => {
+                    const lat = parseFloat(f.geometry.coordinates[1]);
+                    const lng = parseFloat(f.geometry.coordinates[0]);
+                    return bounds.contains([lat, lng]);
+                }).length;
+            } else {
+                visibleCount = filtered_data.features.length;
+            }
+            document.getElementById('pointCount').innerText = `Point(s) Shown: ${visibleCount}`;
             updateParallelCategoriesPlot(filtered_data);
             updateBarPieChart(filtered_data);
             updateLineChart(filtered_data);
@@ -413,16 +501,27 @@ Promise.all(files.map(f => d3.json(f)))
             // color scale setup
             let colorScale;
             if (isQuantitative) {
+                // Use natural log for color scale and remove outliers
                 const numericValues = validFeatures
                     .map(f => +f.properties[selectedField])
-                    .filter(v => !isNaN(v));
+                    .filter(v => !isNaN(v) && v > 0); // log only defined for v > 0
 
-                const minVal = d3.min(numericValues);
-                const maxVal = d3.max(numericValues);
+                const logValues = numericValues.map(v => Math.log(v));
+                // Remove outliers using 1st and 99th percentiles
+                function percentile(arr, p) {
+                    if (arr.length === 0) return 0;
+                    const sorted = arr.slice().sort((a, b) => a - b);
+                    const idx = (sorted.length - 1) * p;
+                    const lower = Math.floor(idx);
+                    const upper = Math.ceil(idx);
+                    if (lower === upper) return sorted[lower];
+                    return sorted[lower] + (sorted[upper] - sorted[lower]) * (idx - lower);
+                }
+                const minLog = percentile(logValues, 0.001);
+                const maxLog = Math.log(quantBoundary);//percentile(logValues, 0.99);
 
                 colorScale = d3.scaleSequential(d3.interpolateViridis)
-                    .domain([minVal, maxVal]);
-
+                    .domain([minLog, maxLog]);
             } else {
                 const uniqueVals = [...new Set(validFeatures.map(f => f.properties[selectedField]))];
                 colorScale = d3.scaleOrdinal()
@@ -436,31 +535,34 @@ Promise.all(files.map(f => d3.json(f)))
                 div.innerHTML = `<h4>${selectedField}</h4>`;
 
                 if (isQuantitative) {
-                    const [min, max] = colorScale.domain();
+                    const [minLog, maxLog] = colorScale.domain();
+                    const min = Math.exp(minLog);
+                    const max = Math.exp(maxLog);
                     div.innerHTML += `
-                        <div style="width: 120px; height: 12px; background: linear-gradient(to right, 
-                            ${d3.range(0, 1.01, 0.1).map(t => colorScale(t * (max - min) + min)).join(', ')}); 
-                            margin-bottom: 6px; border: 1px solid #ccc;"></div>
-                        <div style="display: flex; justify-content: space-between; font-size: 12px;">
-                            <span>${Math.round(min)}</span><span>${Math.round(max)}</span>
+                        <div style="width: 100%; height: 16px; background: linear-gradient(to right, 
+                            ${d3.range(0, 1.01, 0.01).map(t => colorScale(t * (maxLog - minLog) + minLog)).join(', ')}); 
+                            margin-bottom: 8px; border: 1px solid #ccc; border-radius: 3px;"></div>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; width: 100%;">
+                            <span style='overflow: hidden; text-overflow: ellipsis; max-width: 40%;'>${Math.round(min)}</span>
+                            <span style='overflow: hidden; text-overflow: ellipsis; text-align: right; max-width: 40%;'>${Math.round(max)}</span>
                         </div>`;
+                    div.innerHTML += `<div style='margin-top: 6px; font-size: 11px; color: #888;'>Values above ${Math.round(max)} are capped</div>`;
+                    div.innerHTML += `<div style='margin-top: 4px;'><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:black;margin-right:4px;vertical-align:middle;border:1px solid #000;"></span>No data</div>`;
                 } else {
                     colorScale.domain().forEach(val => {
                         const color = colorScale(val);
                         div.innerHTML += `
                             <div>
-                                <span style="background:${color}"></span>
+                                <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${color};margin-right:4px;vertical-align:middle;border:1px solid #000;"></span>
                                 ${val}
                             </div>`;
                     });
+                    div.innerHTML += `
+                        <div>
+                            <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:black;margin-right:4px;vertical-align:middle;border:1px solid #000;"></span>
+                            No data
+                        </div>`;
                 }
-
-                div.innerHTML += `
-                    <div>
-                        <span style="background:black"></span>
-                        No data
-                    </div>`;
-
                 return div;
             };
 
@@ -474,7 +576,7 @@ Promise.all(files.map(f => d3.json(f)))
                     const color = value === null || value === undefined
                         ? 'black'
                         : isQuantitative
-                            ? colorScale(+value)
+                            ? (value > 0 ? colorScale(Math.log(+value)) : 'black')
                             : colorScale(value);
 
                     const markerOptions = {
@@ -544,11 +646,25 @@ Promise.all(files.map(f => d3.json(f)))
                     +f.properties.Longitude
                 ]);
                 const bounds = L.latLngBounds(latlngs);
-                if (
-                    updateMap.cause === 'dropdown' ||
-                    (updateMap.cause === 'colorField')
-                ) {
+                if (updateMap.cause === 'dropdown') {
                     map.fitBounds(bounds, { padding: [30, 30] });
+                } else if (updateMap.cause === 'colorField') {
+                    // Check if there are 0 points visible in the current map view
+                    let visibleCount = 0;
+                    if (pointsLayer && map) {
+                        const mapBounds = map.getBounds();
+                        const features = pointsLayer.toGeoJSON().features;
+                        visibleCount = features.filter(f => {
+                            const lat = parseFloat(f.geometry.coordinates[1]);
+                            const lng = parseFloat(f.geometry.coordinates[0]);
+                            return mapBounds.contains([lat, lng]);
+                        }).length;
+                    }
+                    // If no points are visible, reset the map view
+                    if (visibleCount === 0) {
+                        map.fitBounds(bounds, { padding: [30, 30] });
+                    }
+                    // Otherwise, do not move the map
                 }
             }
 
@@ -595,7 +711,7 @@ Promise.all(files.map(f => d3.json(f)))
                 },
                 font: { size: 12 }
             };
-            Plotly.react('parallelCatsPlot', data, layout, { displayModeBar: false });
+            Plotly.react('parallelCatsPlot', data, Object.assign({}, layout, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
             // Also update Cramér's V bar chart to reflect current columns
             updateCramersVBarChart(filtered_data);
         }
@@ -644,20 +760,6 @@ Promise.all(files.map(f => d3.json(f)))
             if (heatmapLayer) map.addLayer(heatmapLayer);
             map.removeControl(legend);
         });
-        // DELETE THIS LATER
-        /*let filtered_data = {
-            ...data,
-            features: data.features
-        };
-
-        // filter data by incident
-        if (incidentSelect.value === '2025 Incidents') {
-            filtered_data.features = filtered_data.features.filter(f => f.properties.INCIDENTSTARTYEAR === 2025);
-        } else {
-            filtered_data.features = filtered_data.features.filter(
-                f => f.properties.INCIDENTNAME === incidentSelect.value
-            );
-        }*/
 
         // pie/bar chart button listeners
         pieChartButton.addEventListener('click', function () {
@@ -697,9 +799,6 @@ function showNoDataPopup() {
         popup.style.top = '30px';
         popup.style.left = '50%';
         popup.style.transform = 'translateX(-50%)';
-        popup.style.background = 'rgba(255,255,255,0.95)';
-        popup.style.border = '2px solid #d73027';
-        popup.style.color = '#d73027';
         popup.style.padding = '18px 32px';
         popup.style.fontSize = '1.2em';
         popup.style.borderRadius = '8px';
@@ -707,6 +806,16 @@ function showNoDataPopup() {
         popup.style.boxShadow = '0 2px 12px rgba(0,0,0,0.15)';
         popup.innerText = 'No data points visible in this view.';
         document.body.appendChild(popup);
+    }
+    // Set popup style based on dark mode
+    if (isDarkMode()) {
+        popup.style.background = '#23272a';
+        popup.style.color = '#e0e0e0';
+        popup.style.border = '2px solid #4a90e2';
+    } else {
+        popup.style.background = 'rgba(255,255,255,0.95)';
+        popup.style.color = '#d73027';
+        popup.style.border = '2px solid #d73027';
     }
     popup.style.display = 'block';
     setTimeout(() => { popup.style.display = 'none'; }, 2200);
