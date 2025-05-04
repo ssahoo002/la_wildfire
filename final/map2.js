@@ -111,6 +111,26 @@ Promise.all(files.map(f => d3.json(f)))
             triggerUpdateMapDropdown();
         });
 
+        const cleanedLabels = {
+            DAMAGE: 'Damage',
+            CITY: 'City',
+            CALFIREUNIT: 'Cal Fire Unit',
+            COUNTY: 'County',
+            INCIDENTNAME: 'Incident Name',
+            STRUCTURETYPE: 'Structure Type',
+            STRUCTURECATEGORY: 'Structure Category',
+            ROOFCONSTRUCTION: 'Roof Construction',
+            EAVES: 'Eaves',
+            VENTSCREEN: 'Vent Screen',
+            EXTERIORSIDING: 'Exterior Siding',
+            WINDOWPANE: 'Window Pane',
+            DECKPORCHONGRADE: 'Deck/Porch On Grade',
+            PATIOCOVERCARPORT: 'Patio Cover / Carport',
+            FENCEATTACHEDTOSTRUCTURE: 'Fence Attached to Structure',
+            DECADEBUILT: 'Decade Built',
+            ASSESSEDIMPROVEDVALUE: 'Assessed Improved Value',
+        };
+
         const colorFields = ['DAMAGE', 'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
             'VENTSCREEN', 'EXTERIORSIDING', 'WINDOWPANE', 'DECKPORCHONGRADE',
             'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE',
@@ -119,13 +139,15 @@ Promise.all(files.map(f => d3.json(f)))
         colorFields.forEach(field => {
             const option = document.createElement('option');
             option.value = field;
-            option.text = toSentenceCase(field);
+            // option.text = toSentenceCase(field);
+            option.text = cleanedLabels[field];
             colorFieldSelect.appendChild(option);
         });
         quantitativeFields.forEach(field => {
             const option = document.createElement('option');
             option.value = field;
-            option.text = toSentenceCase(field);
+            // option.text = toSentenceCase(field);
+            option.text = cleanedLabels[field];
             colorFieldSelect.appendChild(option);
         });
 
@@ -136,24 +158,32 @@ Promise.all(files.map(f => d3.json(f)))
             'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE',
             'DECADEBUILT'
         ];
+
         const defaultCats = ['DAMAGE', 'STRUCTURETYPE', 'ROOFCONSTRUCTION'];
         const checkboxesDiv = document.getElementById('parallelCatsCheckboxes');
         checkboxesDiv.innerHTML = '';
         parallelCatsStringFields.forEach(field => {
+            const wrap = document.createElement('div');
+            wrap.className = 'checkbox-wrap';
+
             const label = document.createElement('label');
-            label.style.marginRight = '10px';
+            label.className = 'checkbox-label';
+            
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.value = field;
             checkbox.checked = defaultCats.includes(field);
             checkbox.className = 'parallel-cats-checkbox';
+
             // always show Damage, disable its checkbox
             if (field === 'DAMAGE') {
                 checkbox.checked = true;
                 checkbox.disabled = true;
             }
             label.appendChild(checkbox);
-            label.appendChild(document.createTextNode(' ' + toSentenceCase(field)));
+            // label.appendChild(document.createTextNode(' ' + toSentenceCase(field)));
+            label.appendChild(document.createTextNode(' ' + cleanedLabels[field]));
+            wrap.appendChild(label);
             checkboxesDiv.appendChild(label);
         });
         let checkedCats = defaultCats.slice();
