@@ -1,3 +1,4 @@
+/* main container for layout */
 .main-container {
     display: flex;
     justify-content: space-between;
@@ -6,6 +7,7 @@
     margin: 20px auto;
 }
 
+/* point count display */
 #pointCount {
     margin-left: auto;
     padding: 5px 10px;
@@ -15,16 +17,19 @@
     min-width: fit-content;
 }
 
+/* map container styles */
 .map-container {
     width: 100%;
 }
 
+/* plot container for charts */
 .plot-container {
     width: 100%;
     min-width: 400px;
     min-height: 400px;
 }
 
+/* main content container */
 .container {
     display: flex;
     flex-direction: column;
@@ -35,15 +40,16 @@
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+/* map element size */
 #map {
     width: 100%;
     height: 500px;
 }
 
+/* button group for map */
 .button-group {
     display: flex;
     gap: 10px;
-    /* Space between buttons */
     width: 100px;
     height: 40px;
     justify-content: center;
@@ -55,6 +61,7 @@
     /* margin-top: 10px; */
 }
 
+/* button styles for group */
 .button-group button {
     padding: 8px 16px;
     border: 1px solid #ccc;
@@ -63,54 +70,55 @@
     transition: all 0.3s ease;
 }
 
+/* first button rounded left */
 .button-group button:first-child {
     border-radius: 4px 0 0 4px;
 }
 
+/* last button rounded right */
 .button-group button:last-child {
     border-radius: 0 4px 4px 0;
 }
 
+/* active button style */
 .button-group button.active {
     background: #4a90e2;
     color: white;
     border-color: #4a90e2;
 }
 
+/* dropdowns container row */
 .dropdowns-container {
     display: flex;
     justify-content: flex-start;
-    /* Align items horizontally */
     align-items: center;
-    /* Align items vertically */
     gap: 20px;
-    /* Space between dropdowns and buttons */
     padding: 10px;
 }
 
+/* dropdown and label column */
 .dropdown-container {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    /* Align label and dropdown vertically */
 }
 
+/* dropdown label style */
 .dropdown-container label {
     margin-bottom: 5px;
     font-weight: bold;
     text-align: left;
-    /* Ensure the label text is aligned to the left */
     width: 100%;
-    /* Make the label span the full width of the container */
     height: 100%
 }
 
+/* dropdown select style */
 .dropdown-container select {
     padding: 5px;
     font-size: 14px;
 }
 
-
+/* legend box for map */
 .legend {
     background: white;
     padding: 10px;
@@ -121,11 +129,13 @@
     max-width: 240px;
 }
 
+/* legend title style */
 .legend h4 {
     margin: 0 0 10px;
     font-size: 14px;
 }
 
+/* legend colorbar style */
 .legend .colorbar {
     width: 100%;
     height: 16px;
@@ -134,6 +144,7 @@
     border: 1px solid #ccc;
 }
 
+/* legend labels row */
 .legend .legend-labels {
     display: flex;
     justify-content: space-between;
@@ -141,6 +152,7 @@
     width: 100%;
 }
 
+/* legend label text style */
 .legend .legend-labels span {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -148,6 +160,7 @@
     white-space: nowrap;
 }
 
+/* legend color dot style */
 .legend span {
     display: inline-block;
     width: 12px;
@@ -157,6 +170,7 @@
     border: 1px solid #000;
 }
 
+/* label box for tooltips */
 .label-box {
     fill: white;
     stroke: #ccc;
@@ -166,18 +180,21 @@
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
 }
 
+/* label text for tooltips */
 .label-text {
     font-size: 12px;
     font-family: Arial, sans-serif;
     visibility: hidden;
 }
 
+/* left chart container */
 .leftChartContainer {
     position: relative;
     width: 350px;
     height: 350px;
 }
 
+/* secondary button group */
 .button-group2 button {
     padding: 8px 50px 16px 50px;
     border: 1px solid #ccc;
@@ -186,18 +203,20 @@
     transition: all 0.3s ease;
 }
 
+/* active secondary button */
 .button-group2 button.active {
     background: #4a90e2;
     color: white;
     border-color: #4a90e2;
 }
 
-
+/* visualizations container */
 #visualizations {
     justify-content: flex-start;
     align-items: flex-start;
 }
 
+/* pie and line chart style */
 #pieChart,
 #lineChart {
     background: #fff;
@@ -207,6 +226,7 @@
     box-shadow: 0 2px 6px #0001;
 }
 
+/* cramers v bar chart style */
 #cramersVBarChart {
     background: #fff;
     border: 1px solid #ddd;
@@ -215,12 +235,25 @@
     box-shadow: 0 2px 6px #0001;
 }
 
+
+.checkbox-wrapper input[disabled] {
+    pointer-events: none;
+}
+
+/* leaflet tile filler color */
+.leaflet-tile {
+    background: #f0f0f0;
+}
+
 @media (prefers-color-scheme: dark) {
+
+    /* dark mode body */
     body {
         background: #181a1b;
         color: #e0e0e0;
     }
 
+    /* dark mode containers */
     .main-container,
     .container,
     .plot-container,
@@ -229,6 +262,7 @@
         color: #e0e0e0;
     }
 
+    /* dark mode legend */
     .legend {
         background: #23272a;
         color: #e0e0e0;
@@ -236,23 +270,28 @@
         box-shadow: 0 0 10px #000a;
     }
 
+    /* dark mode legend div */
     .legend div {
         margin-bottom: 5px;
         font-size: 12px;
     }
 
+    /* dark mode legend title */
     .legend h4 {
         color: #e0e0e0;
     }
 
+    /* dark mode colorbar */
     .legend .colorbar {
         border: 1px solid #444;
     }
 
+    /* dark mode legend label */
     .legend .legend-labels span {
         color: #e0e0e0;
     }
 
+    /* dark mode chart containers */
     .leftChartContainer,
     #pieChart,
     #lineChart,
@@ -263,6 +302,7 @@
         box-shadow: 0 2px 6px #000a;
     }
 
+    /* dark mode button group */
     .button-group button,
     .button-group2 button {
         background: #23272a;
@@ -270,6 +310,7 @@
         border: 1px solid #444;
     }
 
+    /* dark mode active button */
     .button-group button.active,
     .button-group2 button.active {
         background: #4a90e2;
@@ -277,81 +318,113 @@
         border-color: #4a90e2;
     }
 
+    /* dark mode point count */
     #pointCount {
         background: #23272a;
         color: #e0e0e0;
         border: 1px solid #444;
     }
 
+    /* dark mode checkbox and label */
     .checkbox-container,
     .dropdown-container label {
         color: #e0e0e0;
     }
 
+    /* dark mode dropdown select */
     .dropdown-container select {
         background: #23272a;
         color: #e0e0e0;
         border: 1px solid #444;
     }
 
+    /* dark mode checkbox input */
     input[type="checkbox"] {
         accent-color: #4a90e2;
         background: #23272a;
         border: 1px solid #444;
     }
 
+    /* dark mode label and checkbox */
     label,
     .checkbox-container {
         color: #e0e0e0;
     }
 
-    /* Tooltip dark mode for Leaflet */
+    /* dark mode leaflet tooltip */
     .leaflet-tooltip {
         background: #23272a !important;
         color: #e0e0e0 !important;
         border: 1px solid #444 !important;
     }
 
+    /* dark mode checkbox container */
     .checkbox-container {
         background: #23272a;
         color: #e0e0e0;
     }
 
+    /* dark mode checkbox wrapper */
     .checkbox-wrapper {
         background: #23272a;
         color: #e0e0e0;
     }
 
+    /* dark mode checkbox label */
     .checkbox-label {
         color: #e0e0e0;
     }
 
-    /* Leaflet zoom control dark mode */
+    /* dark mode leaflet zoom control */
     .leaflet-control-zoom {
         background: #23272a !important;
         border: 1px solid #444 !important;
         box-shadow: 0 2px 6px #000a !important;
     }
 
+    /* dark mode leaflet zoom button */
     .leaflet-control-zoom a {
         background: #23272a !important;
         color: #e0e0e0 !important;
         border: 1px solid #444 !important;
     }
 
+    /* dark mode leaflet zoom hover */
     .leaflet-control-zoom a:hover {
         background: #4a90e2 !important;
         color: #fff !important;
     }
 
-    /* Leaflet attribution dark mode */
+    /* dark mode leaflet attribution */
     .leaflet-control-attribution {
         background: #23272a !important;
         color: #e0e0e0 !important;
         border: 1px solid #444 !important;
     }
+
+    /* dark mode leaflet tile loading */
+    .leaflet-pane .leaflet-tile {
+        background: #23272a !important;
+    }
+
+    /* dark mode chart grid lines */
+    .plot-container .chart-grid line,
+    .plot-container .tick line,
+    #pieChart .chart-grid line,
+    #lineChart .chart-grid line,
+    #cramersVBarChart .chart-grid line {
+        stroke: #444 !important;
+    }
+
+    .plot-container .domain,
+    #pieChart .domain,
+    #lineChart .domain,
+    #cramersVBarChart .domain {
+        stroke: #444 !important;
+    }
 }
 
+/* checkbox container styles */
 .checkbox-container {
     margin-top: 10px;
     display: flex;
@@ -359,12 +432,13 @@
     gap: 10px;
 }
 
-
+/* checkbox wrapper styles */
 .checkbox-wrapper {
     display: flex;
     align-items: center;
 }
 
+/* checkbox label styles */
 .checkbox-label {
     display: flex;
     align-items: center;
