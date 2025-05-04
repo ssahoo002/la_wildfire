@@ -60,11 +60,11 @@ const colorFieldSelect = document.getElementById('colorFieldSelect');
 const pieChartButton = document.getElementById('pieChartButton');
 const barChartButton = document.getElementById('barChartButton');
 
-const openPopup = document.getElementById('openPopup');
+const helpButton = document.getElementById('helpButton');
 const closePopup = document.getElementById('closePopup');
 const popup = document.getElementById('popup');
 
-openPopup.addEventListener('click', function () {
+helpButton.addEventListener('click', function () {
     popup.classList.add('open');
 });
 
@@ -568,10 +568,9 @@ Promise.all(files.map(f => d3.json(f)))
             updateBarPieChart(filtered_data);
             updateLineChart(filtered_data);
             updateCramersVBarChart(filtered_data);
-            // show popup if no data
+            // show popup if no data, but only if map was moved
             const checkboxDiv = document.getElementById('parallelCatsCheckboxes');
-            console.log(visibleCount)
-            if (visibleCount === 0) {
+            if (visibleCount === 0 && updateAllVisualizations.cause === 'moveend') {
                 showNoDataPopup();
                 checkboxDiv.style.display = 'none';
             } else {
@@ -897,7 +896,9 @@ Promise.all(files.map(f => d3.json(f)))
                     return bounds.contains([lat, lng]);
                 });
                 const visibleData = { type: "FeatureCollection", features: visibleFeatures };
+                updateAllVisualizations.cause = 'moveend';
                 updateAllVisualizations(visibleData);
+                updateAllVisualizations.cause = undefined;
             }
         });
 
