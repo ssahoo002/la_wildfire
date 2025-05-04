@@ -183,7 +183,7 @@ Promise.all(files.map(f => d3.json(f)))
             ASSESSEDIMPROVEDVALUE: 'Assessed Improved Value',
         };
 
-        const colorFields = ['DAMAGE', 'CALFIREUNIT', 'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
+        const colorFields = ['DAMAGE', 'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
             'VENTSCREEN', 'EXTERIORSIDING', 'WINDOWPANE', 'DECKPORCHONGRADE',
             'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE', 'CALFIREUNIT',
             'DECADEBUILT'];
@@ -572,10 +572,6 @@ Promise.all(files.map(f => d3.json(f)))
             const checkboxDiv = document.getElementById('parallelCatsCheckboxes');
             console.log(visibleCount)
             if (visibleCount === 0) {
-                console.log(filtered_data);
-                console.log(filtered_data.features);
-                console.log(filtered_data.features.length);
-                console.log(visibleCount);
                 showNoDataPopup();
                 checkboxDiv.style.display = 'none';
             } else {
