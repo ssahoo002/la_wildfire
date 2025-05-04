@@ -45,6 +45,8 @@ const legend = L.control({ position: 'topright' });
 
 const quantBoundary = 3000000; // max value for color scale
 
+const parCatRectLabelLength = 80; // max length of labels in parallel categories plot
+
 // layer variables for map
 let pointsLayer;
 let heatmapLayer;
@@ -291,16 +293,16 @@ Promise.all(files.map(f => d3.json(f)))
                     height: 320,
                     margin: { t: 20, l: 10, r: 10, b: 10 },
                     showlegend: false,
-                    xaxis: { gridcolor: gridColor },
-                    yaxis: { gridcolor: gridColor }
+                    xaxis: { gridcolor: gridColor, fixedrange: true },
+                    yaxis: { gridcolor: gridColor, fixedrange: true }
                 };
                 const layout2 = {
                     height: 320,
                     margin: { t: 20, l: 25, r: 25, b: 50 },
                     font: { size: 9 },
                     showlegend: false,
-                    xaxis: { gridcolor: gridColor },
-                    yaxis: { gridcolor: gridColor }
+                    xaxis: { gridcolor: gridColor, fixedrange: true },
+                    yaxis: { gridcolor: gridColor, fixedrange: true }
                 };
                 if (pieChartButton.classList.contains('active')) {
                     Plotly.react('pieChart', dataPie, Object.assign({}, layout, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
@@ -343,16 +345,16 @@ Promise.all(files.map(f => d3.json(f)))
                     height: 320,
                     margin: { t: 20, l: 10, r: 10, b: 10 },
                     showlegend: false,
-                    xaxis: { gridcolor: gridColor },
-                    yaxis: { gridcolor: gridColor }
+                    xaxis: { gridcolor: gridColor, fixedrange: true },
+                    yaxis: { gridcolor: gridColor, fixedrange: true }
                 };
                 const layout2 = {
                     height: 320,
                     margin: { t: 20, l: 25, r: 25, b: 50 },
                     font: { size: 9 },
                     showlegend: false,
-                    xaxis: { gridcolor: gridColor },
-                    yaxis: { gridcolor: gridColor }
+                    xaxis: { gridcolor: gridColor, fixedrange: true },
+                    yaxis: { gridcolor: gridColor, fixedrange: true }
                 };
                 if (pieChartButton.classList.contains('active')) {
                     Plotly.react('pieChart', dataPie, Object.assign({}, layout, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
@@ -411,8 +413,8 @@ Promise.all(files.map(f => d3.json(f)))
             const layout = {
                 height: 320,
                 margin: { t: 20, l: 60, r: 10, b: 60 },
-                xaxis: { title: { text: 'Date', standoff: 20 }, type: 'date', tickformat: '%m-%d\n%I:%M %p', automargin: true, gridcolor: gridColor },
-                yaxis: { title: { text: 'Cumulative Count', standoff: 20 }, automargin: true, gridcolor: gridColor },
+                xaxis: { title: { text: 'Date', standoff: 20 }, type: 'date', tickformat: '%m-%d\n%I:%M %p', automargin: true, gridcolor: gridColor, fixedrange: true },
+                yaxis: { title: { text: 'Cumulative Count', standoff: 20 }, automargin: true, gridcolor: gridColor, fixedrange: true, rangemode: 'tozero', range: [0, null] },
                 showlegend: false
             };
             Plotly.react('lineChart', traces, Object.assign({}, layout, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
@@ -478,7 +480,7 @@ Promise.all(files.map(f => d3.json(f)))
                 const y = filtered_data.features.map(f => f.properties[b] ?? 'No Data');
                 return cramersV(x, y);
             });
-            const labels = pairs.map(([a, b]) => `${toSentenceCase(b)}`);
+            const labels = pairs.map(([a, b]) => `${cleanedLabels[b]}`);
             const gridColor = getGridColor();
             const data = [{
                 x: labels,
@@ -489,8 +491,8 @@ Promise.all(files.map(f => d3.json(f)))
             const layout = {
                 height: 320,
                 margin: { t: 50, l: 40, r: 10, b: 80 },
-                yaxis: { title: "Cramér's V", range: [0, 1], gridcolor: gridColor },
-                xaxis: { tickangle: -45, automargin: true, gridcolor: gridColor },
+                yaxis: { title: "Cramér's V", range: [0, 1], gridcolor: gridColor, fixedrange: true },
+                xaxis: { tickangle: -45, gridcolor: gridColor, fixedrange: true },
                 title: { text: 'Correlation between damage and...', font: { size: 18 }, xref: 'container', x: 0.5 }
             };
             Plotly.react('cramersVBarChart', data, Object.assign({}, layout, isDarkMode() ? { paper_bgcolor: '#23272a', plot_bgcolor: '#23272a', font: { color: '#e0e0e0' } } : {}), { displayModeBar: false });
@@ -591,7 +593,7 @@ Promise.all(files.map(f => d3.json(f)))
             // legend setup
             legend.onAdd = function () {
                 const div = L.DomUtil.create('div', 'legend');
-                div.innerHTML = `<h4>${selectedField}</h4>`;
+                div.innerHTML = `<h4>${cleanedLabels[selectedField]}</h4>`;
 
                 if (isQuantitative) {
                     const [minLog, maxLog] = colorScale.domain();
@@ -746,14 +748,16 @@ Promise.all(files.map(f => d3.json(f)))
             dimensions.forEach(dim => plotData[dim] = []);
             filtered_data.features.forEach(f => {
                 dimensions.forEach(dim => {
-                    plotData[dim].push(f.properties[dim] ?? "No Data");
+                    let rep = f.properties[dim] ?? "No Data";
+                    if (rep.length > parCatRectLabelLength / dimensions.length) rep = rep.substring(0, parCatRectLabelLength / dimensions.length) + '...';
+                    plotData[dim].push(rep);
                 });
             });
             // sort categories for each axis
             const plotlyDimensions = dimensions.map(dim => {
                 const uniqueCats = Array.from(new Set(plotData[dim])).sort((a, b) => String(a).localeCompare(String(b)));
                 return {
-                    label: dim,
+                    label: cleanedLabels[dim] || dim,
                     values: plotData[dim],
                     categoryorder: 'array',
                     categoryarray: uniqueCats
@@ -765,7 +769,8 @@ Promise.all(files.map(f => d3.json(f)))
                 line: {
                     color: 'blue',
                     shape: 'hspline'
-                }
+                },
+                arrangement: 'fixed' // prevent axis reordering
             }];
             const layout = {
                 height: 400,
@@ -792,7 +797,46 @@ Promise.all(files.map(f => d3.json(f)))
         }
         // add event listeners
         incidentSelect.addEventListener('change', triggerUpdateMapDropdown);
-        colorFieldSelect.addEventListener('change', triggerUpdateMapColorField);
+        colorFieldSelect.addEventListener('change', function () {
+            const selectedField = this.value;
+            const checkboxes = checkboxesDiv.querySelectorAll('.parallel-cats-checkbox');
+            let selectedCheckbox = null;
+            checkboxes.forEach(cb => {
+                if (cb.value === selectedField) selectedCheckbox = cb;
+            });
+            if (selectedCheckbox) {
+                if (selectedCheckbox.disabled) {
+                    // find and remove the second column from the left (not DAMAGE)
+                    const enabledCheckboxes = Array.from(checkboxes).filter(cb => cb.checked && cb.value !== 'DAMAGE');
+                    if (enabledCheckboxes.length > 0) {
+                        // find the second checked checkbox (first is DAMAGE)
+                        const toRemove = enabledCheckboxes[0];
+                        toRemove.checked = false;
+                        checkedCats = checkedCats.filter(f => f !== toRemove.value);
+                        // re-enable it
+                        toRemove.disabled = false;
+                    }
+                }
+                // check the selected checkbox if not already
+                if (!selectedCheckbox.checked) {
+                    selectedCheckbox.checked = true;
+                    if (!checkedCats.includes(selectedField)) checkedCats.push(selectedField);
+                }
+                // enforce max axes
+                const checkedCount = checkboxesDiv.querySelectorAll('.parallel-cats-checkbox:checked').length;
+                checkboxes.forEach(cb => {
+                    if (!cb.checked) {
+                        cb.disabled = checkedCount >= 5;
+                    } else {
+                        cb.disabled = false;
+                    }
+                });
+                updateParallelCategoriesPlot(lastFilteredData);
+            }
+            updateMap.cause = 'colorField';
+            updateMap();
+            updateMap.cause = undefined;
+        });
         // update plot on map move
         map.on('moveend', () => {
             if (pointsLayer) {
