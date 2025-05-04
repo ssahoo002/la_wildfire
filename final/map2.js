@@ -183,9 +183,9 @@ Promise.all(files.map(f => d3.json(f)))
             ASSESSEDIMPROVEDVALUE: 'Assessed Improved Value',
         };
 
-        const colorFields = ['DAMAGE', 'CALFIREUNIT', 'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
+        const colorFields = ['DAMAGE', 'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
             'VENTSCREEN', 'EXTERIORSIDING', 'WINDOWPANE', 'DECKPORCHONGRADE',
-            'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE',
+            'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE', 'CALFIREUNIT',
             'DECADEBUILT'];
         const quantitativeFields = ['ASSESSEDIMPROVEDVALUE'];
         colorFields.forEach(field => {
