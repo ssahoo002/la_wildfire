@@ -466,3 +466,41 @@
     align-items: center;
     gap: 5px;
 }
+
+#openPopup {
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#popup {
+    background-color: green;
+    position: fixed;
+    opacity: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    z-index: -10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 550px;
+    height: 350px;
+    text-align: center;
+}
+
+#popup.open {
+    z-index: 90000;
+    opacity: 1;
+}
+
+#popup-info {
+    background-color: green;
+    color: black;
+    border-radius: 5px;
+    padding: 15px 25px;
+}
