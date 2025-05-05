@@ -73,10 +73,10 @@ closePopup.addEventListener('click', function () {
 });
 
 const files = [
-    'data_split/1.geojso',
+    /*'data_split/1.geojso',
     'data_split/2.geojso',
     'data_split/3.geojso',
-    'data_split/4.geojso',
+    'data_split/4.geojso',*/
     'data_split/5.geojso'
 ];
 
@@ -181,13 +181,14 @@ Promise.all(files.map(f => d3.json(f)))
             FENCEATTACHEDTOSTRUCTURE: 'Fence Attached to Structure',
             DECADEBUILT: 'Decade Built',
             ASSESSEDIMPROVEDVALUE: 'Assessed Improved Value',
+            FINANCIALLOSS: 'Financial Loss',
         };
 
         const colorFields = ['DAMAGE', 'STRUCTURETYPE', 'STRUCTURECATEGORY', 'ROOFCONSTRUCTION', 'EAVES',
             'VENTSCREEN', 'EXTERIORSIDING', 'WINDOWPANE', 'DECKPORCHONGRADE',
             'PATIOCOVERCARPORT', 'FENCEATTACHEDTOSTRUCTURE', 'CALFIREUNIT',
             'DECADEBUILT'];
-        const quantitativeFields = ['ASSESSEDIMPROVEDVALUE'];
+        const quantitativeFields = ['ASSESSEDIMPROVEDVALUE', 'FINANCIALLOSS'];
         colorFields.forEach(field => {
             const option = document.createElement('option');
             option.value = field;
@@ -199,6 +200,29 @@ Promise.all(files.map(f => d3.json(f)))
             option.value = field;
             option.text = cleanedLabels[field];
             colorFieldSelect.appendChild(option);
+        });
+
+
+
+        // helper to map DAMAGE to loss fraction
+        function damageFraction(damage) {
+            if (damage === 'No Damage') return 0;
+            if (damage === 'Affected (1-9%)') return 0.1;
+            if (damage === 'Minor (10-25%)') return 0.25;
+            if (damage === 'Major (26-50%)') return 0.5;
+            if (damage === 'Destroyed (>50%)') return 0.8;
+            return NaN;
+        }
+        // compute Financial Loss for each feature
+        data.features.forEach(f => {
+            const v = f.properties.ASSESSEDIMPROVEDVALUE;
+            const d = f.properties.DAMAGE;
+            const frac = damageFraction(d);
+            if (v !== null && v !== undefined && !isNaN(v) && !isNaN(frac)) {
+                f.properties.FINANCIALLOSS = parseInt(v * (frac));
+            } else {
+                f.properties.FINANCIALLOSS = NaN;
+            }
         });
 
         const parallelCatsStringFields = [
@@ -312,18 +336,21 @@ Promise.all(files.map(f => d3.json(f)))
                 const minVal = d3.min(numericValues);
                 const maxVal = d3.max(numericValues);
                 // create bins for chart
-                const binGenerator = d3.bin().domain([minVal, maxVal]).thresholds(10);
+                const binGenerator = d3.bin().domain([minVal, maxVal]).thresholds(8);
                 const bins = binGenerator(numericValues);
                 // labels for bins
-                const binLabels = bins.map(bin => `${bin.x0.toFixed(0)} - ${bin.x1.toFixed(0)}`);
+                var binLabels = bins.map(bin => `${bin.x0.toFixed(0)} - ${bin.x1.toFixed(0)}`);
                 const binCounts = bins.map(bin => bin.length);
                 colorScale = d3.scaleSequential(d3.interpolateViridis).domain([minVal, maxVal]);
+                binLabels = bins.map(bin => `${formatUSDAbbrev(bin.x0)} - ${formatUSDAbbrev(bin.x1)}`);
+                binLabels[binLabels.length - 1] = binLabels[binLabels.length - 1].split(" - ")[0] + " or more";
                 // pie chart data
                 const dataPie = [{
                     type: 'pie',
                     labels: binLabels,
                     values: binCounts,
                     textinfo: 'label+percent',
+                    insidetextorientation: 'auto', 
                     hoverinfo: 'label+value+percent',
                     marker: { line: { color: '#fff', width: 1 } },
                     automargin: true
@@ -340,16 +367,18 @@ Promise.all(files.map(f => d3.json(f)))
                     automargin: true
                 }];
                 const layout = {
+                    title: { text: `<b>${cleanedLabels[selectedField]} Distribution</b>`, font: { size: 17 } },
                     height: 320,
-                    margin: { t: 20, l: 10, r: 10, b: 10 },
+                    margin: { t: 50, l: 10, r: 10, b: 10 },
                     showlegend: false,
                     xaxis: { gridcolor: gridColor, fixedrange: true },
                     yaxis: { gridcolor: gridColor, fixedrange: true }
                 };
                 const layout2 = {
                     height: 320,
-                    margin: { t: 20, l: 25, r: 25, b: 90 }, // further increased bottom margin
-                    font: { size: 9 },
+                    title: { text: `<b>${cleanedLabels[selectedField]} Histogram</b>`, font: { size: 17 } },
+                    margin: { t: 50, l: 25, r: 25, b: 90 },
+                    //font: { size: 9 },
                     showlegend: false,
                     xaxis: { gridcolor: gridColor, fixedrange: true, tickangle: -45, automargin: true },
                     yaxis: { gridcolor: gridColor, fixedrange: true }
@@ -377,6 +406,7 @@ Promise.all(files.map(f => d3.json(f)))
                     labels: labels,
                     values: values,
                     textinfo: 'label+percent',
+                    insidetextorientation: 'auto', 
                     hoverinfo: 'label+value+percent',
                     marker: { line: { color: '#fff', width: 1 } },
                     automargin: true
@@ -393,14 +423,16 @@ Promise.all(files.map(f => d3.json(f)))
                 }];
                 const layout = {
                     height: 320,
-                    margin: { t: 20, l: 10, r: 10, b: 10 },
+                    title: { text: `<b>${cleanedLabels[selectedField]} Distribution</b>`, font: { size: 17 } },
+                    margin: { t: 50, l: 10, r: 10, b: 10 },
                     showlegend: false,
                     xaxis: { gridcolor: gridColor, fixedrange: true },
                     yaxis: { gridcolor: gridColor, fixedrange: true }
                 };
                 const layout2 = {
                     height: 320,
-                    margin: { t: 20, l: 25, r: 25, b: 90 }, // further increased bottom margin
+                    title: { text: `<b>${cleanedLabels[selectedField]} Counts</b>`, font: { size: 17 } },
+                    margin: { t: 50, l: 25, r: 25, b: 90 }, // further increased bottom margin
                     font: { size: 9 },
                     showlegend: false,
                     xaxis: { gridcolor: gridColor, fixedrange: true, tickangle: -45, automargin: true },
@@ -462,7 +494,8 @@ Promise.all(files.map(f => d3.json(f)))
             const gridColor = getGridColor();
             const layout = {
                 height: 320,
-                margin: { t: 20, l: 60, r: 10, b: 40 },
+                margin: { t: 50, l: 60, r: 10, b: 40 },
+                title: { text: `<b>Reported Damage Over Time</b>`, font: { size: 17 } },
                 xaxis: { title: { text: 'Date', standoff: 20 }, type: 'date', tickformat: '%m-%d\n%I:%M %p', automargin: true, gridcolor: gridColor, fixedrange: true },
                 yaxis: { title: { text: 'Cumulative Count', standoff: 20 }, automargin: true, gridcolor: gridColor, fixedrange: true, rangemode: 'tozero', range: [0, null] },
                 showlegend: false
@@ -539,8 +572,9 @@ Promise.all(files.map(f => d3.json(f)))
                 marker: { color: '#4a90e2', line: { color: 'black', width: 1 } }
             }];
             const layout = {
+                title: { text: `<b>Correlation with Damage</b>`, font: { size: 17 } },
                 height: 320,
-                margin: { t: 20, l: 40, r: 10, b: 100 },
+                margin: { t: 50, l: 40, r: 10, b: 100 },
                 yaxis: { title: { text: 'Correlation (Cramér\'s V)', font: { size: 11 } }, range: [0, 1], gridcolor: gridColor, fixedrange: true },
                 xaxis: { tickangle: -45, gridcolor: gridColor, fixedrange: true }
             };
@@ -564,6 +598,14 @@ Promise.all(files.map(f => d3.json(f)))
                 visibleCount = filtered_data.features.length;
             }
             document.getElementById('pointCount').innerText = `Point(s) Shown: ${visibleCount}`;
+            // show estimated loss if coloring by Financial Loss
+            if (colorFieldSelect.value === 'FINANCIALLOSS') {
+                const sum = filtered_data.features.reduce((acc, f) => {
+                    const v = f.properties.FINANCIALLOSS;
+                    return acc + (typeof v === 'number' && !isNaN(v) ? v : 0);
+                }, 0);
+                document.getElementById('pointCount').innerText += `\nEstimated Loss: $${sum.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+            }
             updateParallelCategoriesPlot(filtered_data);
             updateBarPieChart(filtered_data);
             updateLineChart(filtered_data);
@@ -580,6 +622,11 @@ Promise.all(files.map(f => d3.json(f)))
 
         // main update function
         function updateMap() {
+            for (let item of document.getElementsByClassName("js-plotly-plot")) {
+                if (item.style.width.substring(0, 1) !== '1')
+                    item.style.width = parseInt(item.style.width.substring(0, 3)) -
+                        20 + item.style.width.substring(3);
+            };
             // remove old layers
             if (pointsLayer && map.hasLayer(pointsLayer)) {
                 map.removeLayer(pointsLayer);
@@ -612,9 +659,10 @@ Promise.all(files.map(f => d3.json(f)))
             let colorScale;
             if (isQuantitative) {
                 // use natural log for color scale
-                const numericValues = validFeatures
-                    .map(f => +f.properties[selectedField])
-                    .filter(v => !isNaN(v) && v > 0); // log only defined for v > 0
+                const preFeatures = validFeatures
+                .map(f => +f.properties[selectedField]).filter(v => !isNaN(v));
+                const numericValues = preFeatures
+                    .filter(v => v > 0); // log only defined for v > 0
 
                 const logValues = numericValues.map(v => Math.log(v));
                 // remove outliers using percentiles
@@ -627,11 +675,12 @@ Promise.all(files.map(f => d3.json(f)))
                     if (lower === upper) return sorted[lower];
                     return sorted[lower] + (sorted[upper] - sorted[lower]) * (idx - lower);
                 }
-                const minLog = percentile(logValues, 0.001);
+                const minLog = percentile(logValues, 0.01);
                 const maxLog = Math.log(quantBoundary);
 
                 colorScale = d3.scaleSequential(d3.interpolateViridis)
                     .domain([minLog, maxLog]);
+                colorScale.bruh = [Math.min(...preFeatures), Math.max(...preFeatures)];
             } else {
                 const uniqueVals = [...new Set(validFeatures.map(f => f.properties[selectedField]))];
                 colorScale = d3.scaleOrdinal()
@@ -652,11 +701,11 @@ Promise.all(files.map(f => d3.json(f)))
                         <div style="width: 100%; height: 16px; background: linear-gradient(to right, 
                             ${d3.range(0, 1.01, 0.01).map(t => colorScale(t * (maxLog - minLog) + minLog)).join(', ')}); 
                             margin-bottom: 8px; border: 1px solid #ccc; border-radius: 3px;"></div>
-                        <div style="display: flex; justify-content: space-between; font-size: 12px; width: 100%;">
-                            <span style='overflow: hidden; text-overflow: ellipsis; max-width: 40%;'>${Math.round(min)}</span>
-                            <span style='overflow: hidden; text-overflow: ellipsis; text-align: right; max-width: 40%;'>${Math.round(max)}</span>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; width: 86%;">
+                            <span>${formatUSDAbbrev(colorScale.bruh[0])}</span>
+                            <span>${formatUSDAbbrev(colorScale.bruh[1])}</span>
                         </div>`;
-                    div.innerHTML += `<div style='margin-top: 6px; font-size: 11px; color: #888;'>Values above ${Math.round(max)} are capped</div>`;
+                    /*div.innerHTML += `<div style='margin-top: 6px; font-size: 11px; color: #888;'>Values above ${formatUSDAbbrev(Math.round(max))} are capped</div>`;*/
                     div.innerHTML += `<div style='margin-top: 4px;'><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:black;margin-right:4px;vertical-align:middle;border:1px solid #000;"></span>No data</div>`;
                 } else {
                     colorScale.domain().forEach(val => {
@@ -698,7 +747,10 @@ Promise.all(files.map(f => d3.json(f)))
                         fillOpacity: 0.8
                     };
 
-                    var str = `<strong>${feature.properties.INCIDENTNAME}</strong><br>${cleanedLabels[selectedField]}: ${value ?? 'null'}`;
+                    if (isQuantitative)
+                        var str = `<strong>${feature.properties.INCIDENTNAME}</strong><br>${cleanedLabels[selectedField]}: ${formatUSDAbbrev(value ?? 'No data')}`;
+                    else
+                        var str = `<strong>${feature.properties.INCIDENTNAME}</strong><br>${cleanedLabels[selectedField]}: ${value ?? 'No data'}`;
 
 
                     if (selectedField !== 'DAMAGE')
@@ -781,6 +833,11 @@ Promise.all(files.map(f => d3.json(f)))
             filtered_data = null;
             validFeatures = null;
             visibleFeatures = null;
+            for (let item of document.getElementsByClassName("js-plotly-plot")) {
+                if (item.style.width.substring(0, 1) !== '1')
+                    item.style.width = parseInt(item.style.width.substring(0, 3)) +
+                        20 + item.style.width.substring(3);
+            };
         }
 
         // update parallel categories plot
@@ -822,6 +879,7 @@ Promise.all(files.map(f => d3.json(f)))
                 //arrangement: 'fixed' // prevent axis reordering
             }];
             const layout = {
+                title: { text: `<b>Parallel Categories Plot</b>`, font: { size: 17 } },
                 height: 400,
                 yaxis: {
                     automargin: true
@@ -934,11 +992,6 @@ Promise.all(files.map(f => d3.json(f)))
 
         // initial map update
         updateMap();
-        for (let item of document.getElementsByClassName("js-plotly-plot")) {
-            if (item.style.width.substring(0, 1) !== '1')
-                item.style.width = parseInt(item.style.width.substring(0, 3)) +
-                    20 + item.style.width.substring(3);
-        };
     })
     .catch(error => console.error('Error loading GeoJSON:', error));
 
@@ -1045,3 +1098,17 @@ if (window.matchMedia) {
 
 // global variable for current filtered data
 window.currentFilteredData = null;
+
+// formats a number as USD with commas and two decimals
+function formatUSD(num) {
+    if (typeof num !== 'number' || isNaN(num)) return null;
+    return '$' + num.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+function formatUSDAbbrev(num) {
+    if (typeof num !== 'number' || isNaN(num)) return null;
+    if (num >= 1e9) return '$' + (num / 1e9).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 }) + 'B';
+    if (num >= 1e6) return '$' + (num / 1e6).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 }) + 'M';
+    if (num >= 1e3) return '$' + (num / 1e3).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 }) + 'K';
+    return '$' + num.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}

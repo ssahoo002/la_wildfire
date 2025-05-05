@@ -1,126 +1,31 @@
-# LA Wildfires
+# California Wildfire Structural Damage
 
-CMSC734 Final Project - LA Wildfires
+**Team Members:** Spencer Jenkins, Vincent La, Sambit Sahoo
 
-__Datasets:__
+## Project Overview
 
-[California Wildfire Damage (2014-(feb)2025)](https://www.kaggle.com/datasets/vivekattri/california-wildfire-damage-2014-feb2025?resource=download)
+In this project, we provide an analysis tool to find trends regarding the damage caused by California wildfires. Our data, from the CAL FIRE Damage Inspection (DINS) database, provides structural features, damage metrics, and financial assessments for buildings within 100 meters of a given wildfire. Our interface centers around a map interface implemented using Leaflet. The user can choose a fire to display data for, and then choose a building attribute to examine. The selected data in view on the map will also populate some auxiliary plots. These consist of a parallel categories plot useful for trends across attributes, a pie chart/bar chart to show the breakdown and counts for a selected attribute, a time series illustrating the fire’s progression, and a correlation bar chart showing which attributes show the strongest relationship with fire damage. Changing the map view automatically changes the data displayed in the auxiliary plots. Our visualization supports multiple modes of analysis, including geospatial, chronological, and attribute-by-attribute analysis. Our tool provides an intuitive and insightful resource to answer our original questions about wildfire damage, as well as many more, and would be a valuable addition to the toolbox of policymakers and wildfire researchers.
 
-[The California Wildfire Data](https://www.kaggle.com/datasets/vijayveersingh/the-california-wildfire-data/data)
+- **Visualization Link:** [https://ssahoo002.github.io/la_wildfire/final/](https://ssahoo002.github.io/la_wildfire/final/)
+- **Video:** `la_wildfire_demo.mp4`
 
-+ Original (updated) source: [CAL FIRE Damage Inspection (DINS) Data](https://data.cnra.ca.gov/dataset/cal-fire-damage-inspection-dins-data)
-+ [DINS Database Dictionary](DINSDatabaseDictionary.pdf)
+## Original Questions
 
-## Questions Answered
+- Were older structures more vulnerable to the wildfires than newer structures? How does this trend change based on physical locality?
+- Were certain CAL FIRE units more effective in containing the spread of wildfires from year to year?
+- How much did the value of structures within a given area change after being exposed to wildfires?
+- Which fires were the most destructive by various metrics? Compare the 2025 Palisades and Eaton incidents?
+- How does the damage from the January 2025 wildfires compare to previous years?
 
-1. Which attribute was most strongly correlated with whether a building burned down? Not easy bc you just have to click all the check boxes
-2. What correlation exists between the building's age and whether or not it burned down? FAIL
-3. Where are the most severely damaged structures located geographically? Trends like how close to the mountains
-4. How does the distribution of structure types vary by incident?
-5. What is the relationship between roof construction and damage severity?
-6. How do different counties compare in terms of structure loss?
-7. Are certain exterior siding types more vulnerable to fire damage?
-8. How does the year built relate to damage across incidents? FAIL
-9. What patterns exist between eaves type and structure survival?
-10. How does the presence of attached fences affect damage outcomes?
-11. Are there spatial clusters of high or low damage within incidents?
-12. How does the distribution of damage types change over time?
-13. What is the relationship between CALFIRE unit and structure outcomes?
-14. How do patio covers or carports relate to fire damage?
-15. Can we identify incidents with unusually high or low structure survival rates?
+## Answers
 
-Kinsey
-Whhich areas were destroyed and which areas weren't? (Why did individual houses not survive in areas that mostly survived and vice versa)
+1. We generally did not observe any strong trend between building age and fire damage. Correlation values between building age and building damage were generally below 0.15. However, within clusters of structures of a given incident, you can analyze trends regarding structure age. For example, this particular portion of destroyed structures in the 2025 Eaton wildfire mostly contains homes built before 1960.
 
-## Project Submission Details
+2. We observed no strong correlation between structural damage and the CAL FIRE unit responsible for that structure. The correlation value for structural damage and CAL FIRE unit is typically below 0.2. For example, looking at the 2024 wildfires, neither the parallel categories plot nor the correlation calculation shows a strong correlation between damage and CAL FIRE units.
 
-### Topic
-**California Wildfire Structure Damage Analysis and Visualization**
+3. Our dataset includes an “Assessed Improved Value” attribute, which represents the county assessor’s determination of the real estate value of the development on a given property. We transform this data to obtain the “Financial Loss” attribute by multiplying the assessed improved value by the percent damaged.
+Our visualization can output the total losses for the data displayed on the map. Using our program, our estimate for the total financial loss incurred by the Palisades fire is $3.8 billion, while the loss incurred by the Eaton fire is $1.6 billion, for a financial loss ratio of approximately 2.4 to 1. According to data presented by the LA Times, our determined ratio is approximately equal to the expert-determined ratio of around 2.8 to 1, or $22 billion from the Palisades fire and $7.8 billion from the Eaton fire. It is expected that our data would underreport the total damage figure as we are only considering real estate damage, and not environmental damage, infrastructure damage, commercial interruption, and so on; and our data does not include assessed values for many public structures and facilities such as schools.
 
-### Team Members
-- Spencer Jenkins
-- Vincent La
-- Sambit Sahoo
+4. The Eaton fire impacted more structures overall compared to the Palisades fire with 18,422 recorded data points versus 12,070. However, the Palisades fire was much more proportionally destructive. While the Eaton fire damaged or destroyed 10,528 structures, or 53% of structures in the affected area, the Palisades fire damaged or destroyed 7,808 structures, or 64.7% of structures in the affected area.
 
-### Project Overview
-This project presents an interactive web-based visualization system designed to help users explore, analyze, and answer complex questions about buildings affected by recent California wildfires. The system integrates multiple coordinated views—including a map, parallel categories plot, and summary charts—allowing users to interactively filter, compare, and discover patterns in the structure damage data. The unified interface supports a range of analytical tasks, enabling users to investigate spatial, temporal, and categorical relationships in the data.
-
----
-
-## User Tasks (Framed as Questions)
-
-1. Which structure and environmental attributes are most strongly associated with buildings burning down?
-2. How does the age of a building relate to its likelihood of burning down in different incidents?
-3. Where are the most severely damaged structures located for each major wildfire incident?
-4. How do structure types and roof constructions relate to damage outcomes across incidents?
-5. Are there spatial or categorical clusters of high or low damage, and how do these patterns change across incidents and years?
-
-*The above questions should be presented on a separate page from the answers in your PDF submission.*
-
----
-
-## Ground Truth Answers (with Example Visualizations)
-
-1. **Which structure and environmental attributes are most strongly associated with buildings burning down?**  
-   *Answer:* The parallel categories plot and Cramér's V bar chart reveal that roof construction and exterior siding are highly correlated with damage outcomes. For example, structures with wood siding and unenclosed eaves show a higher proportion of complete destruction.  
-   *[Insert screenshot of parallel categories plot and Cramér's V bar chart]*
-
-2. **How does the age of a building relate to its likelihood of burning down in different incidents?**  
-   *Answer:* The scatter plot and line chart indicate that older buildings, especially those built before 1980, are more likely to be completely destroyed, particularly in incidents such as the 2018 Camp Fire.  
-   *[Insert screenshot of scatter/line chart filtered by incident]*
-
-3. **Where are the most severely damaged structures located for each major wildfire incident?**  
-   *Answer:* The map view, when filtered by incident and colored by damage, shows clusters of destroyed buildings in the wildland-urban interface, especially at the periphery of urban areas in incidents like Tubbs and Camp.  
-   *[Insert screenshot of map with damage coloring for a major incident]*
-
-4. **How do structure types and roof constructions relate to damage outcomes across incidents?**  
-   *Answer:* The parallel categories plot demonstrates that single-family residences with asphalt roofs are less likely to be destroyed compared to those with wood shake roofs, across multiple incidents.  
-   *[Insert screenshot of parallel categories plot with relevant axes selected]*
-
-5. **Are there spatial or categorical clusters of high or low damage, and how do these patterns change across incidents and years?**  
-   *Answer:* The map and pie chart reveal that certain counties and years (e.g., Butte County in 2018) experienced concentrated clusters of high damage, while other areas saw more mixed outcomes.  
-   *[Insert screenshot of map and pie chart for selected county/year]*
-
----
-
-## System Access
-
-- **Live Web App:** <spencerrjenkins.github.io>
-- **Source Code:** Included in this zip file under the `final` directory.
-- **Dataset:** Download from [California Wildfire Damage (2014-(feb)2025)](https://www.kaggle.com/datasets/vivekattri/california-wildfire-damage-2014-feb2025?resource=download) or [CAL FIRE DINS Data](https://data.cnra.ca.gov/dataset/cal-fire-damage-inspection-dins-data)
-- **Setup Instructions:** See the README section above for setup and run instructions.
-
----
-
-## Demo Video
-
-- **URL:** [Insert YouTube or Vimeo link here]
-
-*The video demonstrates the system’s capabilities and user interface. It does not provide answers to the analysis questions.*
-
----
-
-## Unified Interface and Interaction Design
-
-- All visualizations (map, parallel categories, pie/line/bar charts) are presented in a single, unified web interface.
-- Interactions such as filtering by incident, attribute selection, and map zoom/pan are coordinated across all views.
-- No separate tabs or windows are used; all tasks are supported within the main dashboard.
-- The interface is designed for smooth usability, with responsive layout and minimal scrolling required.
-
----
-
-## Additional Notes
-
-- If the dataset is too large to include, download links are provided above.
-- All code and resources needed to run the app are included in the `final` directory.
-- For any issues or questions, please contact [your contact info or GitHub].
-
-
-Kinsey feedback:
-move dropdown closer to map
-get rid of line chart
-Not clear that fires besides eaton and palisades are not 2025 
-not easy to add up raw numbers on pie chart
-Categorize incidents by year in dropdown
-
-Remove fires with like 3-4 buildings burned downMake the comparison to historical fires clearer
+5. Comparing the two years through the “Select Year” dropdown, it is clear that the damage done in 2025 was far worse than in 2024. 2025 had more than 5x the number of affected structures, 53.3% of which were rated to be “Destroyed (>50%)”. In comparison, across all 2024 incidents, only 18.7% fell into that same damage category. Furthermore, using the Financial Loss tool, our program reports $5.4 billion in financial losses due to fire damages in 2025, compared to $222 million in damages for 2024 and $3.2 million in damages for 2023.
