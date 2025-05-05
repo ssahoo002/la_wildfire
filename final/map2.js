@@ -73,10 +73,10 @@ closePopup.addEventListener('click', function () {
 });
 
 const files = [
-    /*'data_split/1.geojso',
+    'data_split/1.geojso',
     'data_split/2.geojso',
     'data_split/3.geojso',
-    'data_split/4.geojso',*/
+    'data_split/4.geojso',
     'data_split/5.geojso'
 ];
 
